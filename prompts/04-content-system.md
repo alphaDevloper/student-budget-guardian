@@ -1,0 +1,3 @@
+Read AGENTS.md first and follow it strictly.
+
+Create the initial app content system using hardcoded TypeScript data. Add `types/budget.ts`, `data/categories.ts`, `data/transactions.ts`, `data/budgets.ts`, and `data/financial-tips.ts`. Define expense and income categories, sample transactions, monthly budgets, spending limits, financial goals, and beginner-friendly budgeting tips. Include realistic sample data for a student budget, using PKR as the default currency. Make the data reusable across the dashboard, expense tracking, budget overview, and analytics screens. Keep everything simple, properly typed, and easy to extend.
