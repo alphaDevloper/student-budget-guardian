@@ -5,6 +5,44 @@ import { Transaction } from '@/types/budget';
  * Chronologically ordered across the current budget cycle
  */
 export const SAMPLE_TRANSACTIONS: Transaction[] = [
+  // Design Snapshot Transactions (Prompts / 05 Home UI Design)
+  {
+    id: 'tx-burger-king',
+    title: 'Burger King',
+    amount: 8.99,
+    type: 'expense',
+    categoryId: 'food',
+    date: '2026-11-21T19:30:00Z',
+    note: 'Food & Dining • Today, 7:30 PM',
+    paymentMethod: 'Nayapay',
+    tags: ['dining', 'fast-food'],
+    createdAt: '2026-11-21T19:30:00Z',
+  },
+  {
+    id: 'tx-book-store',
+    title: 'Book Store',
+    amount: 24.50,
+    type: 'expense',
+    categoryId: 'study',
+    date: '2026-11-20T17:20:00Z',
+    note: 'Books & Study • Yesterday, 5:20 PM',
+    paymentMethod: 'Cash',
+    tags: ['books', 'coursework'],
+    createdAt: '2026-11-20T17:20:00Z',
+  },
+  {
+    id: 'tx-bus-fare',
+    title: 'Bus Fare',
+    amount: 1.50,
+    type: 'expense',
+    categoryId: 'transport',
+    date: '2026-11-20T15:15:00Z',
+    note: 'Transport • Yesterday, 3:15 PM',
+    paymentMethod: 'Easypaisa',
+    tags: ['commute', 'bus'],
+    createdAt: '2026-11-20T15:15:00Z',
+  },
+
   // Today's Transactions
   {
     id: 'tx-001',

@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from 'react';
 import {
   View,
   Text,
@@ -6,47 +6,67 @@ import {
   ScrollView,
   TextInput,
   Alert,
-} from "react-native";
-import { SafeAreaView } from "react-native-safe-area-context";
-import OnboardingScreen from "@/components/onboarding/OnboardingScreen";
-import { colors } from "@/theme/colors";
+} from 'react-native';
+import AsyncStorage from '@react-native-async-storage/async-storage';
+import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
+import OnboardingScreen from '@/components/onboarding/OnboardingScreen';
+import { HomeScreen, BottomTabBar } from '@/components/dashboard';
+import { TabKey } from '@/components/dashboard/BottomTabBar';
 import {
   useBudgetStore,
   useExpenseStore,
   useIncomeStore,
   useFinancialMetrics,
-} from "@/store";
-import { EXPENSE_CATEGORIES, getCategoryById } from "@/data/categories";
-import { FINANCIAL_TIPS } from "@/data/financial-tips";
+} from '@/store';
+import { EXPENSE_CATEGORIES, getCategoryById } from '@/data/categories';
+import { CURRENT_USER } from '@/constants/user';
+import { colors } from '@/theme/colors';
 import {
-  formatPKR,
-  formatTransactionAmount,
-  formatTransactionDate,
+  formatCurrency,
   calculateBudgetUtilization,
-} from "@/utils";
-import { PaymentMethod, Transaction } from "@/types/budget";
-
-type ActiveTab = "home" | "add" | "analytics";
+} from '@/utils';
+import { PaymentMethod, Transaction } from '@/types/budget';
 
 const PAYMENT_METHODS: PaymentMethod[] = [
-  "Cash",
-  "Easypaisa",
-  "Nayapay",
-  "Sadapay",
-  "JazzCash",
-  "Bank Transfer",
+  'Cash',
+  'Easypaisa',
+  'Nayapay',
+  'Sadapay',
+  'JazzCash',
+  'Bank Transfer',
 ];
 
 export default function Index() {
-  const [isOnboardingComplete, setIsOnboardingComplete] = useState(false);
-  const [activeTab, setActiveTab] = useState<ActiveTab>("home");
+  // Default to true so Home screen UI is immediately visible on launch
+  const [isOnboardingComplete, setIsOnboardingComplete] = useState(true);
+  const [activeTab, setActiveTab] = useState<TabKey>('home');
+  const insets = useSafeAreaInsets();
 
-  // Zustand Store Hooks
-  const { monthlyBudget, financialGoals, contributeToGoal } = useBudgetStore();
+  useEffect(() => {
+    AsyncStorage.getItem('@student_guardian_onboarding_complete')
+      .then((saved) => {
+        if (saved === 'false') {
+          setIsOnboardingComplete(false);
+        }
+      })
+      .catch(() => {});
+  }, []);
+
+  const handleCompleteOnboarding = async () => {
+    setIsOnboardingComplete(true);
+    await AsyncStorage.setItem('@student_guardian_onboarding_complete', 'true').catch(() => {});
+  };
+
+  const handleReplayOnboarding = async () => {
+    setIsOnboardingComplete(false);
+    await AsyncStorage.setItem('@student_guardian_onboarding_complete', 'false').catch(() => {});
+  };
+
+  // Zustand Stores
+  const { monthlyBudget } = useBudgetStore();
   const { expenses, addExpense, deleteExpense } = useExpenseStore();
   const { incomes } = useIncomeStore();
   const {
-    totalIncome,
     totalExpenses,
     remainingBudget,
     utilization,
@@ -56,26 +76,61 @@ export default function Index() {
   } = useFinancialMetrics();
 
   // Add Expense Form State
-  const [expenseTitle, setExpenseTitle] = useState("");
-  const [expenseAmount, setExpenseAmount] = useState("");
-  const [selectedCategory, setSelectedCategory] = useState("food");
-  const [selectedPayment, setSelectedPayment] = useState<PaymentMethod>("Cash");
-  const [expenseNote, setExpenseNote] = useState("");
+  const [expenseTitle, setExpenseTitle] = useState('');
+  const [expenseAmount, setExpenseAmount] = useState('');
+  const [selectedCategory, setSelectedCategory] = useState('food');
+  const [selectedPayment, setSelectedPayment] = useState<PaymentMethod>('Cash');
+  const [expenseNote, setExpenseNote] = useState('');
   const [formSuccess, setFormSuccess] = useState(false);
 
-  // Combine and sort recent transactions
+  // Currency prefix from user profile or budget ($ by default as in design)
+  const currencyPrefix = CURRENT_USER.currencyPrefix || '$';
+
+  // Format category budget items for CategoryBudgetGrid
+  const categoryGridItems = [
+    {
+      id: 'food',
+      name: 'Food & Dining',
+      spent: categorySpending['food'] || 120,
+      allocated: 200,
+      color: colors.warning,
+    },
+    {
+      id: 'study',
+      name: 'Books & Study',
+      spent: categorySpending['study'] || 60,
+      allocated: 100,
+      color: colors.brightBlue,
+    },
+    {
+      id: 'transport',
+      name: 'Transport',
+      spent: categorySpending['transport'] || 40,
+      allocated: 80,
+      color: colors.success,
+    },
+    {
+      id: 'other',
+      name: 'Others',
+      spent: (categorySpending['other'] || 0) + (categorySpending['bills'] || 0) || 60,
+      allocated: 120,
+      color: colors.purple,
+    },
+  ];
+
+  // All transactions combined and sorted by date
   const allTransactions: Transaction[] = [...expenses, ...incomes].sort(
     (a, b) => new Date(b.date).getTime() - new Date(a.date).getTime()
   );
 
   const handleCreateExpense = () => {
-    const numAmount = parseFloat(expenseAmount.replace(/[^0-9.]/g, ""));
+    const numAmount = parseFloat(expenseAmount.replace(/[^0-9.]/g, ''));
     if (!expenseTitle.trim()) {
-      Alert.alert("Missing Title", "Please enter a title for the expense.");
+      Alert.alert('Missing Title', 'Please enter a title for the expense.');
       return;
     }
     if (isNaN(numAmount) || numAmount <= 0) {
-      Alert.alert("Invalid Amount", "Please enter a valid expense amount in PKR.");
+      Alert.alert('Invalid Amount', 'Please enter a valid expense amount.');
       return;
     }
 
@@ -87,625 +142,315 @@ export default function Index() {
       note: expenseNote.trim() || undefined,
     });
 
-    setExpenseTitle("");
-    setExpenseAmount("");
-    setExpenseNote("");
+    setExpenseTitle('');
+    setExpenseAmount('');
+    setExpenseNote('');
     setFormSuccess(true);
 
     setTimeout(() => {
       setFormSuccess(false);
-      setActiveTab("home");
+      setActiveTab('home');
     }, 1200);
   };
 
-  const handleDeleteTransaction = (tx: Transaction) => {
-    if (tx.type === "expense") {
-      deleteExpense(tx.id);
-    }
-  };
-
-  // If onboarding is active, show the onboarding screen
+  // 1. Onboarding Screen
   if (!isOnboardingComplete) {
     return (
       <OnboardingScreen
-        onGetStarted={() => setIsOnboardingComplete(true)}
-        onSkip={() => setIsOnboardingComplete(true)}
+        onGetStarted={handleCompleteOnboarding}
+        onSkip={handleCompleteOnboarding}
       />
     );
   }
 
-  return (
-    <SafeAreaView className="flex-1 bg-dark-navy" edges={["top", "bottom"]}>
-      {/* App Header & Navigation */}
-      <View className="px-5 pt-3 pb-3 border-b border-border bg-dark-navy">
-        <View className="flex-row items-center justify-between mb-3">
-          <View>
-            <View className="flex-row items-baseline">
-              <Text
-                className="text-white text-xl font-bold"
-                style={{ fontFamily: "Inter_700Bold" }}
-              >
-                Student{" "}
-              </Text>
-              <Text
-                className="text-bright-blue text-xl font-bold"
-                style={{ fontFamily: "Inter_700Bold" }}
-              >
-                Guardian
+  // 2. Home Tab (Pixel-Perfect Home Screen from Design)
+  if (activeTab === 'home') {
+    return (
+      <HomeScreen
+        totalBudget={800}
+        totalSpent={480}
+        remainingAmount={320}
+        currencyPrefix={currencyPrefix}
+        categories={categoryGridItems}
+        transactions={allTransactions}
+        activeTab={activeTab}
+        onTabPress={setActiveTab}
+        onNotificationPress={() =>
+          Alert.alert(
+            'Notifications',
+            "You have 1 budget alert: You've used 60% of your Food & Dining budget."
+          )
+        }
+        onSeeAllTransactions={() => setActiveTab('analytics')}
+        onPressTransaction={(tx) => {
+          Alert.alert(
+            tx.title,
+            `Amount: ${currencyPrefix}${tx.amount}\nCategory: ${
+              getCategoryById(tx.categoryId).name
+            }\nDate: ${new Date(tx.date).toLocaleDateString()}`,
+            [
+              { text: 'Close', style: 'cancel' },
+              {
+                text: 'Delete',
+                style: 'destructive',
+                onPress: () => deleteExpense(tx.id),
+              },
+            ]
+          );
+        }}
+      />
+    );
+  }
+
+  // 3. Add Expense Tab
+  if (activeTab === 'add') {
+    return (
+      <SafeAreaView className="flex-1 bg-dark-navy" edges={['top']}>
+        <View className="px-5 pt-3 pb-3 border-b border-border flex-row items-center justify-between">
+          <Text
+            className="text-white text-xl font-bold"
+            style={{ fontFamily: 'Inter_700Bold' }}
+          >
+            Add Expense
+          </Text>
+          <Pressable
+            onPress={() => setActiveTab('home')}
+            className="px-3 py-1 rounded-full bg-surface border border-border"
+          >
+            <Text className="text-bright-blue text-xs font-semibold">
+              Cancel
+            </Text>
+          </Pressable>
+        </View>
+
+        <ScrollView
+          className="flex-1 px-5 pt-4"
+          contentContainerStyle={{ paddingBottom: 40 }}
+          showsVerticalScrollIndicator={false}
+        >
+          {formSuccess && (
+            <View className="mb-4 p-3 bg-success/20 border border-success/40 rounded-xl flex-row items-center">
+              <Text className="text-success text-sm font-semibold">
+                ✓ Expense recorded! Budget updated.
               </Text>
             </View>
-            <Text
-              className="text-text-secondary text-[11px] mt-0.5"
-              style={{ fontFamily: "Inter_400Regular" }}
-            >
-              PKR Budget • Zustand Persisted
+          )}
+
+          {/* Title */}
+          <View className="mb-4">
+            <Text className="text-text-secondary text-xs font-medium mb-1.5">
+              Expense Title *
             </Text>
+            <TextInput
+              className="input-field"
+              placeholder="e.g. Burger King, Bookstore, Bus Fare"
+              placeholderTextColor={colors.text.disabled}
+              value={expenseTitle}
+              onChangeText={setExpenseTitle}
+            />
+          </View>
+
+          {/* Amount */}
+          <View className="mb-4">
+            <Text className="text-text-secondary text-xs font-medium mb-1.5">
+              Amount ({currencyPrefix}) *
+            </Text>
+            <TextInput
+              className="input-field text-lg font-bold"
+              placeholder={`${currencyPrefix}0.00`}
+              placeholderTextColor={colors.text.disabled}
+              value={expenseAmount}
+              onChangeText={setExpenseAmount}
+              keyboardType="numeric"
+            />
+          </View>
+
+          {/* Category */}
+          <View className="mb-5">
+            <Text className="text-text-secondary text-xs font-medium mb-2">
+              Category *
+            </Text>
+            <View className="flex-row flex-wrap gap-2">
+              {EXPENSE_CATEGORIES.map((cat) => {
+                const isSelected = selectedCategory === cat.id;
+                return (
+                  <Pressable
+                    key={cat.id}
+                    onPress={() => setSelectedCategory(cat.id)}
+                    className={`px-3 py-2 rounded-xl border flex-row items-center ${
+                      isSelected
+                        ? 'bg-surface-elevated border-bright-blue'
+                        : 'bg-surface border-border'
+                    }`}
+                  >
+                    <View
+                      className="w-2.5 h-2.5 rounded-full mr-2"
+                      style={{ backgroundColor: cat.color }}
+                    />
+                    <Text
+                      className={`text-xs font-medium ${
+                        isSelected ? 'text-white' : 'text-text-secondary'
+                      }`}
+                    >
+                      {cat.name}
+                    </Text>
+                  </Pressable>
+                );
+              })}
+            </View>
+          </View>
+
+          {/* Payment Method */}
+          <View className="mb-5">
+            <Text className="text-text-secondary text-xs font-medium mb-2">
+              Payment Method
+            </Text>
+            <View className="flex-row flex-wrap gap-2">
+              {PAYMENT_METHODS.map((method) => {
+                const isSelected = selectedPayment === method;
+                return (
+                  <Pressable
+                    key={method}
+                    onPress={() => setSelectedPayment(method)}
+                    className={`px-3 py-1.5 rounded-lg border ${
+                      isSelected
+                        ? 'bg-bright-blue/20 border-bright-blue'
+                        : 'bg-surface border-border'
+                    }`}
+                  >
+                    <Text
+                      className={`text-xs ${
+                        isSelected
+                          ? 'text-bright-blue font-semibold'
+                          : 'text-text-secondary'
+                      }`}
+                    >
+                      {method}
+                    </Text>
+                  </Pressable>
+                );
+              })}
+            </View>
+          </View>
+
+          {/* Note */}
+          <View className="mb-6">
+            <Text className="text-text-secondary text-xs font-medium mb-1.5">
+              Note (Optional)
+            </Text>
+            <TextInput
+              className="input-field"
+              placeholder="e.g. Lunch with study group"
+              placeholderTextColor={colors.text.disabled}
+              value={expenseNote}
+              onChangeText={setExpenseNote}
+            />
           </View>
 
           <Pressable
-            onPress={() => setIsOnboardingComplete(false)}
-            className="bg-surface-elevated px-3 py-1.5 rounded-full border border-border active:opacity-70"
-          >
-            <Text className="text-bright-blue text-xs font-semibold">
-              ‹ Onboarding
-            </Text>
-          </Pressable>
-        </View>
-
-        {/* Tab Navigation: Home | Add Expense | Analytics */}
-        <View className="flex-row bg-surface p-1 rounded-xl border border-border">
-          <Pressable
-            onPress={() => setActiveTab("home")}
-            className={`flex-1 py-2 rounded-lg items-center ${
-              activeTab === "home" ? "bg-bright-blue" : ""
-            }`}
+            onPress={handleCreateExpense}
+            className="w-full btn-primary py-4 rounded-full items-center justify-center flex-row active:opacity-90 shadow-lg shadow-bright-blue/30"
           >
             <Text
-              className={`text-xs font-semibold ${
-                activeTab === "home" ? "text-white" : "text-text-secondary"
-              }`}
+              className="text-white text-base font-semibold"
+              style={{ fontFamily: 'Inter_600SemiBold' }}
             >
-              Home
+              Save Expense
             </Text>
           </Pressable>
+        </ScrollView>
 
-          <Pressable
-            onPress={() => setActiveTab("add")}
-            className={`flex-1 py-2 rounded-lg items-center ${
-              activeTab === "add" ? "bg-bright-blue" : ""
-            }`}
-          >
-            <Text
-              className={`text-xs font-semibold ${
-                activeTab === "add" ? "text-white" : "text-text-secondary"
-              }`}
-            >
-              + Add Expense
-            </Text>
-          </Pressable>
+        <BottomTabBar
+          activeTab={activeTab}
+          onTabPress={setActiveTab}
+          bottomInset={insets.bottom}
+        />
+      </SafeAreaView>
+    );
+  }
 
-          <Pressable
-            onPress={() => setActiveTab("analytics")}
-            className={`flex-1 py-2 rounded-lg items-center ${
-              activeTab === "analytics" ? "bg-bright-blue" : ""
-            }`}
-          >
-            <Text
-              className={`text-xs font-semibold ${
-                activeTab === "analytics" ? "text-white" : "text-text-secondary"
-              }`}
-            >
-              Analytics
-            </Text>
-          </Pressable>
-        </View>
+  // 4. Analytics & Settings Tab
+  return (
+    <SafeAreaView className="flex-1 bg-dark-navy" edges={['top']}>
+      <View className="px-5 pt-3 pb-3 border-b border-border flex-row items-center justify-between">
+        <Text
+          className="text-white text-xl font-bold"
+          style={{ fontFamily: 'Inter_700Bold' }}
+        >
+          {activeTab === 'analytics' ? 'Monthly Analytics' : 'Settings'}
+        </Text>
+        <Pressable
+          onPress={() => setIsOnboardingComplete(false)}
+          className="px-3 py-1 rounded-full bg-surface border border-border"
+        >
+          <Text className="text-bright-blue text-xs font-semibold">
+            ‹ Onboarding
+          </Text>
+        </Pressable>
       </View>
 
       <ScrollView
-        className="flex-1 px-5"
+        className="flex-1 px-5 pt-4"
         contentContainerStyle={{ paddingBottom: 40 }}
         showsVerticalScrollIndicator={false}
       >
-        {/* TAB 1: HOME SCREEN */}
-        {activeTab === "home" && (
-          <View className="pt-4">
-            {/* Live Monthly Budget Overview Card */}
-            <View className="card-surface p-5 mb-5">
-              <View className="flex-row items-center justify-between mb-3">
-                <View>
-                  <Text className="text-text-secondary text-xs uppercase font-medium">
-                    Total Monthly Budget
-                  </Text>
-                  <Text
-                    className="text-white text-3xl font-bold mt-1"
-                    style={{ fontFamily: "Inter_700Bold" }}
-                  >
-                    {formatPKR(monthlyBudget.totalBudget)}
-                  </Text>
-                </View>
-
-                <View className="items-end">
-                  <View className="badge-success px-2.5 py-1 flex-row items-center">
-                    <Text className="text-success text-xs font-semibold">
-                      Income: {formatPKR(totalIncome)}
-                    </Text>
-                  </View>
-                  <Text
-                    className={`text-xs font-semibold mt-1.5 ${
-                      remainingBudget >= 0 ? "text-success" : "text-danger"
-                    }`}
-                  >
-                    Remaining: {formatPKR(remainingBudget)}
-                  </Text>
-                </View>
-              </View>
-
-              {/* Progress Bar */}
-              <View className="w-full h-2.5 bg-surface-elevated rounded-full overflow-hidden my-2">
-                <View
-                  className={`h-full rounded-full ${
-                    utilization > 100
-                      ? "bg-danger"
-                      : utilization > 80
-                      ? "bg-warning"
-                      : "bg-bright-blue"
-                  }`}
-                  style={{ width: `${Math.min(utilization, 100)}%` }}
-                />
-              </View>
-
-              <View className="flex-row justify-between mt-1">
-                <Text className="text-text-secondary text-xs">
-                  Spent: {formatPKR(totalExpenses)}
-                </Text>
-                <Text className="text-bright-blue text-xs font-semibold">
-                  {utilization}% Utilized
-                </Text>
-              </View>
-            </View>
-
-            {/* Category Budgets (Live Updated from Expense Store) */}
-            <View className="mb-6">
-              <Text
-                className="text-white text-lg font-bold mb-3"
-                style={{ fontFamily: "Inter_700Bold" }}
-              >
-                Category Budgets
-              </Text>
-
-              {monthlyBudget.categoryBudgets.map((cb) => {
-                const cat = getCategoryById(cb.categoryId);
-                // Calculate live spending from expenses store
-                const liveSpent = categorySpending[cb.categoryId] || 0;
-                const percent = calculateBudgetUtilization(
-                  cb.allocatedAmount,
-                  liveSpent
-                );
-
-                return (
-                  <View
-                    key={cb.categoryId}
-                    className="card-surface p-3.5 mb-2.5 flex-row items-center justify-between"
-                  >
-                    <View className="flex-row items-center flex-1 mr-3">
-                      <View
-                        className="w-10 h-10 rounded-xl items-center justify-center mr-3"
-                        style={{ backgroundColor: `${cat.color}25` }}
-                      >
-                        <View
-                          className="w-3.5 h-3.5 rounded-full"
-                          style={{ backgroundColor: cat.color }}
-                        />
-                      </View>
-                      <View className="flex-1">
-                        <Text className="text-white font-semibold text-sm">
-                          {cat.name}
-                        </Text>
-                        <Text className="text-text-secondary text-xs mt-0.5">
-                          {formatPKR(liveSpent)} / {formatPKR(cb.allocatedAmount)}
-                        </Text>
-                        <View className="w-full h-1.5 bg-surface-elevated rounded-full overflow-hidden mt-1.5">
-                          <View
-                            className="h-full rounded-full"
-                            style={{
-                              width: `${Math.min(percent, 100)}%`,
-                              backgroundColor: cat.color,
-                            }}
-                          />
-                        </View>
-                      </View>
-                    </View>
-                    <Text
-                      className="font-bold text-xs"
-                      style={{ color: cat.color }}
-                    >
-                      {percent}%
-                    </Text>
-                  </View>
-                );
-              })}
-            </View>
-
-            {/* Financial Goals with Interactive Contribution */}
-            <View className="mb-6">
-              <Text
-                className="text-white text-lg font-bold mb-3"
-                style={{ fontFamily: "Inter_700Bold" }}
-              >
-                Student Financial Goals
-              </Text>
-              {financialGoals.map((goal) => {
-                const pct = calculateBudgetUtilization(
-                  goal.targetAmount,
-                  goal.currentAmount
-                );
-                return (
-                  <View key={goal.id} className="card-surface p-3.5 mb-2.5">
-                    <View className="flex-row justify-between items-center mb-1">
-                      <Text className="text-white font-semibold text-sm">
-                        {goal.title}
-                      </Text>
-                      <View className="flex-row items-center space-x-2">
-                        <Text className="text-success text-xs font-bold mr-2">
-                          {goal.isCompleted ? "Goal Met ✓" : `${pct}%`}
-                        </Text>
-                        {!goal.isCompleted && (
-                          <Pressable
-                            onPress={() => contributeToGoal(goal.id, 1000)}
-                            className="bg-primary/20 px-2 py-0.5 rounded border border-primary/40 active:opacity-70"
-                          >
-                            <Text className="text-bright-blue text-[10px] font-bold">
-                              +Rs. 1,000
-                            </Text>
-                          </Pressable>
-                        )}
-                      </View>
-                    </View>
-                    <Text className="text-text-secondary text-xs mb-2">
-                      Saved {formatPKR(goal.currentAmount)} of{" "}
-                      {formatPKR(goal.targetAmount)}
-                    </Text>
-                    <View className="w-full h-1.5 bg-surface-elevated rounded-full overflow-hidden">
-                      <View
-                        className="h-full bg-success rounded-full"
-                        style={{ width: `${Math.min(pct, 100)}%` }}
-                      />
-                    </View>
-                  </View>
-                );
-              })}
-            </View>
-
-            {/* Recent Transactions (Live list with Delete support) */}
-            <View className="mb-6">
-              <View className="flex-row justify-between items-center mb-3">
-                <Text
-                  className="text-white text-lg font-bold"
-                  style={{ fontFamily: "Inter_700Bold" }}
-                >
-                  Recent Transactions
-                </Text>
-                <Text className="text-text-secondary text-xs">
-                  {allTransactions.length} total
-                </Text>
-              </View>
-
-              <View className="card-surface p-4">
-                {allTransactions.slice(0, 7).map((tx) => {
-                  const cat = getCategoryById(tx.categoryId);
-                  return (
-                    <View
-                      key={tx.id}
-                      className="flex-row items-center justify-between py-2.5 border-b border-border/30 last:border-0"
-                    >
-                      <View className="flex-row items-center flex-1 mr-2">
-                        <View
-                          className="w-8 h-8 rounded-lg items-center justify-center mr-3"
-                          style={{ backgroundColor: `${cat.color}25` }}
-                        >
-                          <View
-                            className="w-2.5 h-2.5 rounded-full"
-                            style={{ backgroundColor: cat.color }}
-                          />
-                        </View>
-                        <View className="flex-1">
-                          <Text
-                            className="text-white font-medium text-sm"
-                            numberOfLines={1}
-                          >
-                            {tx.title}
-                          </Text>
-                          <Text className="text-text-secondary text-[11px] mt-0.5">
-                            {formatTransactionDate(tx.date)} • {tx.paymentMethod}
-                          </Text>
-                        </View>
-                      </View>
-
-                      <View className="flex-row items-center space-x-2">
-                        <Text
-                          className={`font-bold text-sm mr-2 ${
-                            tx.type === "income"
-                              ? "text-success"
-                              : "text-danger"
-                          }`}
-                        >
-                          {formatTransactionAmount(tx.amount, tx.type)}
-                        </Text>
-                        {tx.type === "expense" && (
-                          <Pressable
-                            onPress={() => handleDeleteTransaction(tx)}
-                            hitSlop={8}
-                            className="p-1 active:opacity-60"
-                          >
-                            <Text className="text-text-disabled text-xs font-bold">
-                              ✕
-                            </Text>
-                          </Pressable>
-                        )}
-                      </View>
-                    </View>
-                  );
-                })}
-              </View>
-            </View>
-
-            {/* Financial Tips */}
-            <View className="mb-4">
-              <Text
-                className="text-white text-lg font-bold mb-3"
-                style={{ fontFamily: "Inter_700Bold" }}
-              >
-                Student Budgeting Tips
-              </Text>
-              {FINANCIAL_TIPS.slice(0, 2).map((tip) => (
-                <View key={tip.id} className="card-surface p-4 mb-3">
-                  <Text className="text-bright-blue font-semibold text-sm mb-1">
-                    {tip.title}
-                  </Text>
-                  <Text className="text-text-secondary text-xs leading-4">
-                    {tip.summary}
-                  </Text>
-                </View>
-              ))}
-            </View>
-          </View>
-        )}
-
-        {/* TAB 2: ADD EXPENSE SCREEN */}
-        {activeTab === "add" && (
-          <View className="pt-4">
-            <Text
-              className="text-white text-2xl font-bold mb-1"
-              style={{ fontFamily: "Inter_700Bold" }}
-            >
-              Add New Expense
-            </Text>
-            <Text className="text-text-secondary text-xs mb-5">
-              Record a student expense in PKR. Data updates your budget instantly.
-            </Text>
-
-            {formSuccess && (
-              <View className="mb-4 p-3 bg-success/20 border border-success/40 rounded-xl flex-row items-center">
-                <Text className="text-success text-sm font-semibold">
-                  ✓ Expense added successfully! Updating budget...
-                </Text>
-              </View>
-            )}
-
-            {/* Expense Title */}
-            <View className="mb-4">
-              <Text className="text-text-secondary text-xs font-medium mb-1.5">
-                Expense Title *
-              </Text>
-              <TextInput
-                className="input-field"
-                placeholder="e.g. Campus Cafeteria, Notebooks, Bus"
-                placeholderTextColor={colors.text.disabled}
-                value={expenseTitle}
-                onChangeText={setExpenseTitle}
-              />
-            </View>
-
-            {/* Expense Amount */}
-            <View className="mb-4">
-              <Text className="text-text-secondary text-xs font-medium mb-1.5">
-                Amount (PKR) *
-              </Text>
-              <TextInput
-                className="input-field text-lg font-bold"
-                placeholder="Rs. 0"
-                placeholderTextColor={colors.text.disabled}
-                value={expenseAmount}
-                onChangeText={setExpenseAmount}
-                keyboardType="numeric"
-              />
-            </View>
-
-            {/* Category Selector */}
-            <View className="mb-5">
-              <Text className="text-text-secondary text-xs font-medium mb-2">
-                Select Category *
-              </Text>
-              <View className="flex-row flex-wrap gap-2">
-                {EXPENSE_CATEGORIES.map((cat) => {
-                  const isSelected = selectedCategory === cat.id;
-                  return (
-                    <Pressable
-                      key={cat.id}
-                      onPress={() => setSelectedCategory(cat.id)}
-                      className={`px-3 py-2 rounded-xl border flex-row items-center ${
-                        isSelected
-                          ? "bg-surface-elevated border-bright-blue"
-                          : "bg-surface border-border"
-                      }`}
-                    >
-                      <View
-                        className="w-2.5 h-2.5 rounded-full mr-2"
-                        style={{ backgroundColor: cat.color }}
-                      />
-                      <Text
-                        className={`text-xs font-medium ${
-                          isSelected ? "text-white" : "text-text-secondary"
-                        }`}
-                      >
-                        {cat.name}
-                      </Text>
-                    </Pressable>
-                  );
-                })}
-              </View>
-            </View>
-
-            {/* Payment Method Selector */}
-            <View className="mb-5">
-              <Text className="text-text-secondary text-xs font-medium mb-2">
-                Payment Method
-              </Text>
-              <View className="flex-row flex-wrap gap-2">
-                {PAYMENT_METHODS.map((method) => {
-                  const isSelected = selectedPayment === method;
-                  return (
-                    <Pressable
-                      key={method}
-                      onPress={() => setSelectedPayment(method)}
-                      className={`px-3 py-1.5 rounded-lg border ${
-                        isSelected
-                          ? "bg-bright-blue/20 border-bright-blue"
-                          : "bg-surface border-border"
-                      }`}
-                    >
-                      <Text
-                        className={`text-xs ${
-                          isSelected
-                            ? "text-bright-blue font-semibold"
-                            : "text-text-secondary"
-                        }`}
-                      >
-                        {method}
-                      </Text>
-                    </Pressable>
-                  );
-                })}
-              </View>
-            </View>
-
-            {/* Optional Note */}
-            <View className="mb-6">
-              <Text className="text-text-secondary text-xs font-medium mb-1.5">
-                Note (Optional)
-              </Text>
-              <TextInput
-                className="input-field"
-                placeholder="Add optional detail or tags"
-                placeholderTextColor={colors.text.disabled}
-                value={expenseNote}
-                onChangeText={setExpenseNote}
-              />
-            </View>
-
-            {/* Submit Button */}
-            <Pressable
-              onPress={handleCreateExpense}
-              className="w-full btn-primary py-4 rounded-full items-center justify-center flex-row active:opacity-90 shadow-lg shadow-bright-blue/30"
-            >
-              <Text
-                className="text-white text-base font-semibold"
-                style={{ fontFamily: "Inter_600SemiBold" }}
-              >
-                Save Expense
-              </Text>
-            </Pressable>
-          </View>
-        )}
-
-        {/* TAB 3: ANALYTICS SCREEN */}
-        {activeTab === "analytics" && (
-          <View className="pt-4">
-            <Text
-              className="text-white text-2xl font-bold mb-1"
-              style={{ fontFamily: "Inter_700Bold" }}
-            >
-              Monthly Analytics
-            </Text>
-            <Text className="text-text-secondary text-xs mb-5">
-              Live breakdown of student spending patterns in PKR.
-            </Text>
-
-            {/* Key Stat Cards */}
+        {activeTab === 'analytics' ? (
+          <View>
+            {/* Stats row */}
             <View className="flex-row space-x-3 mb-5">
-              <View className="flex-1 card-surface p-4">
+              <View className="flex-1 card-surface p-4 rounded-2xl">
                 <Text className="text-text-secondary text-[11px]">
                   Daily Average
                 </Text>
                 <Text
                   className="text-white text-xl font-bold mt-1"
-                  style={{ fontFamily: "Inter_700Bold" }}
+                  style={{ fontFamily: 'Inter_700Bold' }}
                 >
-                  {formatPKR(dailyAverage)}
-                </Text>
-                <Text className="text-text-disabled text-[10px] mt-0.5">
-                  Over 21 days
+                  {currencyPrefix}
+                  {dailyAverage.toLocaleString()}
                 </Text>
               </View>
 
-              <View className="flex-1 card-surface p-4">
+              <View className="flex-1 card-surface p-4 rounded-2xl">
                 <Text className="text-text-secondary text-[11px]">
                   Savings Rate
                 </Text>
                 <Text
                   className="text-success text-xl font-bold mt-1"
-                  style={{ fontFamily: "Inter_700Bold" }}
+                  style={{ fontFamily: 'Inter_700Bold' }}
                 >
                   {savingsRate}%
-                </Text>
-                <Text className="text-text-disabled text-[10px] mt-0.5">
-                  Target: 15%
                 </Text>
               </View>
             </View>
 
-            {/* Category Breakdown Bars */}
-            <View className="card-surface p-5 mb-5">
+            {/* Category breakdown */}
+            <View className="card-surface p-5 rounded-2xl mb-5">
               <Text
                 className="text-white text-base font-bold mb-3"
-                style={{ fontFamily: "Inter_700Bold" }}
+                style={{ fontFamily: 'Inter_700Bold' }}
               >
-                Spending by Category
+                Category Spending
               </Text>
-
-              {EXPENSE_CATEGORIES.map((cat) => {
-                const catSpent = categorySpending[cat.id] || 0;
-                if (catSpent === 0) return null;
-                const catPercent =
+              {categoryGridItems.map((cat) => {
+                const percent =
                   totalExpenses > 0
-                    ? Math.round((catSpent / totalExpenses) * 100)
+                    ? Math.round((cat.spent / totalExpenses) * 100)
                     : 0;
-
                 return (
-                  <View key={cat.id} className="mb-3.5">
-                    <View className="flex-row justify-between items-center mb-1">
-                      <View className="flex-row items-center">
-                        <View
-                          className="w-2.5 h-2.5 rounded-full mr-2"
-                          style={{ backgroundColor: cat.color }}
-                        />
-                        <Text className="text-white text-xs font-medium">
-                          {cat.name}
-                        </Text>
-                      </View>
+                  <View key={cat.id} className="mb-3">
+                    <View className="flex-row justify-between mb-1">
+                      <Text className="text-white text-xs">{cat.name}</Text>
                       <Text className="text-white text-xs font-semibold">
-                        {formatPKR(catSpent)}{" "}
-                        <Text className="text-text-secondary text-[11px]">
-                          ({catPercent}%)
-                        </Text>
+                        {currencyPrefix}
+                        {cat.spent} ({percent}%)
                       </Text>
                     </View>
-
-                    <View className="w-full h-2 bg-surface-elevated rounded-full overflow-hidden">
+                    <View className="w-full h-2 bg-[#192743] rounded-full overflow-hidden">
                       <View
                         className="h-full rounded-full"
                         style={{
-                          width: `${catPercent}%`,
+                          width: `${percent}%`,
                           backgroundColor: cat.color,
                         }}
                       />
@@ -714,58 +459,41 @@ export default function Index() {
                 );
               })}
             </View>
-
-            {/* Financial Health Summary */}
-            <View className="card-surface p-5 mb-5">
-              <Text
-                className="text-white text-base font-bold mb-2"
-                style={{ fontFamily: "Inter_700Bold" }}
-              >
-                Financial Guardian Health
+          </View>
+        ) : (
+          <View>
+            <View className="card-surface p-5 rounded-2xl mb-4">
+              <Text className="text-white font-bold text-base mb-2">
+                User Profile
               </Text>
-              <View className="flex-row items-center py-1.5 border-b border-border/30">
-                <Text className="text-text-secondary text-xs flex-1">
-                  Budget Utilization
-                </Text>
-                <Text
-                  className={`text-xs font-bold ${
-                    utilization > 100
-                      ? "text-danger"
-                      : utilization > 80
-                      ? "text-warning"
-                      : "text-success"
-                  }`}
-                >
-                  {utilization}%{" "}
-                  {utilization > 100
-                    ? "(Over Budget)"
-                    : utilization > 80
-                    ? "(Warning Zone)"
-                    : "(Healthy)"}
-                </Text>
-              </View>
-
-              <View className="flex-row items-center py-1.5 border-b border-border/30">
-                <Text className="text-text-secondary text-xs flex-1">
-                  Total Expenses Count
-                </Text>
-                <Text className="text-white text-xs font-semibold">
-                  {expenses.length} records
-                </Text>
-              </View>
-
-              <View className="flex-row items-center py-1.5">
-                <Text className="text-text-secondary text-xs flex-1">
-                  Total Income Count
-                </Text>
-                <Text className="text-white text-xs font-semibold">
-                  {incomes.length} records
-                </Text>
-              </View>
+              <Text className="text-text-secondary text-sm">
+                Name: {CURRENT_USER.name}
+              </Text>
+              <Text className="text-text-secondary text-sm mt-1">
+                Currency: {currencyPrefix}
+              </Text>
+              <Text className="text-text-secondary text-sm mt-1">
+                Greeting: {CURRENT_USER.greetingTitle}
+              </Text>
             </View>
+
+            <Pressable
+              onPress={handleReplayOnboarding}
+              className="w-full btn-secondary py-3.5 rounded-full items-center justify-center mt-4"
+            >
+              <Text className="text-white text-sm font-semibold">
+                ← Replay Onboarding Screen
+              </Text>
+            </Pressable>
           </View>
         )}
       </ScrollView>
+
+      <BottomTabBar
+        activeTab={activeTab}
+        onTabPress={setActiveTab}
+        bottomInset={insets.bottom}
+      />
     </SafeAreaView>
   );
 }
