@@ -5,7 +5,6 @@ import {
   Image,
   Pressable,
   ScrollView,
-  StyleSheet,
   useWindowDimensions,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
@@ -20,35 +19,12 @@ export default function OnboardingScreen({
   onGetStarted,
   onSkip,
 }: OnboardingScreenProps) {
-  const { height, width } = useWindowDimensions();
+  const { height } = useWindowDimensions();
   const isSmallScreen = height < 720;
-  const isWideScreen = width > 480;
   const [activeSlide, setActiveSlide] = useState(0);
-
-  // Dynamic spacer to position content perfectly below the 3D books & graduation cap
-  const heroSpacerHeight = isSmallScreen
-    ? Math.round(height * 0.28)
-    : Math.round(Math.min(height * 0.33, 270));
 
   return (
     <SafeAreaView className="flex-1 bg-dark-navy" edges={["top", "bottom"]}>
-      {/* Full-bleed background illustration with top wave, 3D graduation cap/books/coin, and bottom luminous wave */}
-      <View
-        style={StyleSheet.absoluteFill}
-        pointerEvents="none"
-        className="items-center justify-center overflow-hidden"
-      >
-        <Image
-          source={require("@/assets/images/onboarding_illustration.png")}
-          style={{
-            width: isWideScreen ? 420 : "100%",
-            height: "100%",
-          }}
-          resizeMode="cover"
-          accessibilityLabel="Onboarding background with graduation cap, books, calculator, coin and luminous waves"
-        />
-      </View>
-
       {/* Top Bar with Skip */}
       <View className="px-6 pt-2 pb-1 flex-row items-center justify-end z-10">
         <Pressable
@@ -72,11 +48,30 @@ export default function OnboardingScreen({
         bounces={false}
       >
         <View className="items-center px-6">
-          {/* Spacer reserving the upper section for the 3D illustration artwork */}
-          <View style={{ height: heroSpacerHeight }} />
+          {/* New 3D Hero Illustration */}
+          <View className="items-center justify-center relative w-full my-1">
+            {/* Ambient blue background glow */}
+            <View
+              className="absolute w-60 h-60 rounded-full"
+              style={{
+                backgroundColor: "rgba(22, 140, 255, 0.12)",
+                transform: [{ scale: 1.15 }],
+              }}
+            />
+
+            <Image
+              source={require("@/assets/images/onboarding_hero.png")}
+              style={{
+                width: isSmallScreen ? 240 : 280,
+                height: isSmallScreen ? 220 : 260,
+              }}
+              resizeMode="contain"
+              accessibilityLabel="Student graduation cap, books, calculator, and gold coin"
+            />
+          </View>
 
           {/* App Title & Subtitle */}
-          <View className="items-center mt-1 mb-5">
+          <View className="items-center mt-2 mb-6">
             <Text
               className="text-[30px] font-bold text-white text-center leading-[36px] tracking-tight"
               style={{ fontFamily: "Inter_700Bold" }}
@@ -223,7 +218,7 @@ export default function OnboardingScreen({
         </View>
 
         {/* Bottom Section: Pagination Dots + Get Started Button */}
-        <View className="px-6 mt-6">
+        <View className="px-6 mt-8">
           {/* Pagination Dots */}
           <View className="flex-row items-center justify-center mb-5 space-x-2">
             {[0, 1, 2, 3].map((index) => {
