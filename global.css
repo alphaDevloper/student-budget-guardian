@@ -3,3 +3,236 @@
 @import "tailwindcss/utilities.css";
 
 @import "nativewind/theme";
+
+@theme {
+  /* Color Palette */
+  --color-primary: #087BFF;
+  --color-bright-blue: #168CFF;
+  --color-deep-blue: #0645A8;
+  --color-navy: #071329;
+  --color-dark-navy: #050D1C;
+  --color-surface: #111D35;
+  --color-surface-elevated: #192743;
+  --color-border: #263754;
+  --color-border-light: #354B72;
+  --color-success: #20D997;
+  --color-warning: #FF9F43;
+  --color-danger: #FF5B65;
+  --color-purple: #965BFF;
+
+  /* Text Colors */
+  --color-text-primary: #FFFFFF;
+  --color-text-secondary: #8FA0C0;
+  --color-text-tertiary: #5C7194;
+  --color-text-disabled: #4A5D7E;
+
+  /* Category Colors */
+  --color-cat-food: #FF9F43;
+  --color-cat-study: #168CFF;
+  --color-cat-transport: #20D997;
+  --color-cat-other: #965BFF;
+  --color-cat-bills: #087BFF;
+
+  /* Border Radii */
+  --radius-sm: 10px;
+  --radius-md: 14px;
+  --radius-lg: 20px;
+  --radius-xl: 24px;
+  --radius-full: 9999px;
+
+  /* Spacing Scale */
+  --spacing-xs: 4px;
+  --spacing-sm: 8px;
+  --spacing-md: 12px;
+  --spacing-lg: 16px;
+  --spacing-xl: 20px;
+  --spacing-2xl: 24px;
+  --spacing-3xl: 32px;
+  --spacing-4xl: 40px;
+  --spacing-5xl: 48px;
+
+  /* Font Families */
+  --font-inter-regular: Inter_400Regular;
+  --font-inter-medium: Inter_500Medium;
+  --font-inter-semibold: Inter_600SemiBold;
+  --font-inter-bold: Inter_700Bold;
+}
+
+/* Custom Design System Utility Classes */
+@layer utilities {
+  /* Typography Utilities */
+  .text-display {
+    font-size: 32px;
+    line-height: 40px;
+    font-family: Inter_700Bold;
+    font-weight: 700;
+  }
+
+  .text-h1 {
+    font-size: 26px;
+    line-height: 34px;
+    font-family: Inter_700Bold;
+    font-weight: 700;
+  }
+
+  .text-h2 {
+    font-size: 22px;
+    line-height: 28px;
+    font-family: Inter_600SemiBold;
+    font-weight: 600;
+  }
+
+  .text-h3 {
+    font-size: 18px;
+    line-height: 24px;
+    font-family: Inter_600SemiBold;
+    font-weight: 600;
+  }
+
+  .text-body-lg {
+    font-size: 16px;
+    line-height: 24px;
+    font-family: Inter_400Regular;
+    font-weight: 400;
+  }
+
+  .text-body {
+    font-size: 14px;
+    line-height: 20px;
+    font-family: Inter_400Regular;
+    font-weight: 400;
+  }
+
+  .text-body-sm {
+    font-size: 12px;
+    line-height: 16px;
+    font-family: Inter_400Regular;
+    font-weight: 400;
+  }
+
+  .text-caption {
+    font-size: 11px;
+    line-height: 14px;
+    font-family: Inter_500Medium;
+    font-weight: 500;
+  }
+
+  .text-button {
+    font-size: 15px;
+    line-height: 20px;
+    font-family: Inter_600SemiBold;
+    font-weight: 600;
+  }
+
+  /* Card Surfaces */
+  .card-surface {
+    background-color: #111D35;
+    border-width: 1px;
+    border-color: #263754;
+    border-radius: 20px;
+  }
+
+  .card-surface-elevated {
+    background-color: #192743;
+    border-width: 1px;
+    border-color: #263754;
+    border-radius: 20px;
+  }
+
+  /* Buttons */
+  .btn-primary {
+    background-color: #087BFF;
+    border-radius: 14px;
+    padding-vertical: 14px;
+    padding-horizontal: 20px;
+    align-items: center;
+    justify-content: center;
+  }
+
+  .btn-secondary {
+    background-color: #192743;
+    border-width: 1px;
+    border-color: #263754;
+    border-radius: 14px;
+    padding-vertical: 14px;
+    padding-horizontal: 20px;
+    align-items: center;
+    justify-content: center;
+  }
+
+  .btn-ghost {
+    background-color: transparent;
+    border-width: 1px;
+    border-color: #263754;
+    border-radius: 14px;
+    padding-vertical: 14px;
+    padding-horizontal: 20px;
+    align-items: center;
+    justify-content: center;
+  }
+
+  .btn-destructive {
+    background-color: rgba(255, 91, 101, 0.1);
+    border-width: 1px;
+    border-color: #FF5B65;
+    border-radius: 14px;
+    padding-vertical: 14px;
+    padding-horizontal: 20px;
+    align-items: center;
+    justify-content: center;
+  }
+
+  .btn-disabled {
+    background-color: #111D35;
+    border-width: 1px;
+    border-color: #1E2D4A;
+    border-radius: 14px;
+    padding-vertical: 14px;
+    padding-horizontal: 20px;
+    align-items: center;
+    justify-content: center;
+    opacity: 0.5;
+  }
+
+  /* Input fields */
+  .input-field {
+    background-color: #071329;
+    border-width: 1px;
+    border-color: #263754;
+    border-radius: 14px;
+    color: #FFFFFF;
+    padding-horizontal: 16px;
+    padding-vertical: 12px;
+    font-size: 14px;
+    font-family: Inter_400Regular;
+  }
+
+  /* Badges */
+  .badge-success {
+    background-color: rgba(32, 217, 151, 0.15);
+    border-radius: 9999px;
+    padding-horizontal: 10px;
+    padding-vertical: 4px;
+  }
+
+  .badge-warning {
+    background-color: rgba(255, 159, 67, 0.15);
+    border-radius: 9999px;
+    padding-horizontal: 10px;
+    padding-vertical: 4px;
+  }
+
+  .badge-danger {
+    background-color: rgba(255, 91, 101, 0.15);
+    border-radius: 9999px;
+    padding-horizontal: 10px;
+    padding-vertical: 4px;
+  }
+
+  .badge-info {
+    background-color: rgba(8, 123, 255, 0.15);
+    border-radius: 9999px;
+    padding-horizontal: 10px;
+    padding-vertical: 4px;
+  }
+}
