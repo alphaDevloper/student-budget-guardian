@@ -11,54 +11,36 @@ export const SAMPLE_MONTHLY_BUDGET: MonthlyBudget = {
   id: 'budget-2026-11',
   month: 11,
   year: 2026,
-  currency: 'PKR',
-  totalIncome: 35000,
-  totalBudget: 30000,
+  currency: 'USD',
+  totalIncome: 1000,
+  totalBudget: 800,
   categoryBudgets: [
     {
       categoryId: 'food',
-      allocatedAmount: 10000,
-      spentAmount: 6480, // 64.8% used
-      warningThresholdPercentage: 80,
-    },
-    {
-      categoryId: 'transport',
-      allocatedAmount: 6000,
-      spentAmount: 3950, // 65.8% used
+      allocatedAmount: 320,
+      spentAmount: 192,
       warningThresholdPercentage: 80,
     },
     {
       categoryId: 'study',
-      allocatedAmount: 4000,
-      spentAmount: 2650, // 66.3% used
+      allocatedAmount: 160,
+      spentAmount: 96,
       warningThresholdPercentage: 85,
     },
     {
-      categoryId: 'bills',
-      allocatedAmount: 3000,
-      spentAmount: 2450, // 81.7% used (warning trigger)
+      categoryId: 'transport',
+      allocatedAmount: 120,
+      spentAmount: 72,
       warningThresholdPercentage: 80,
     },
     {
-      categoryId: 'entertainment',
-      allocatedAmount: 4000,
-      spentAmount: 2900, // 72.5% used
-      warningThresholdPercentage: 75,
-    },
-    {
-      categoryId: 'health',
-      allocatedAmount: 2000,
-      spentAmount: 820, // 41.0% used
-      warningThresholdPercentage: 90,
-    },
-    {
-      categoryId: 'other',
-      allocatedAmount: 1000,
-      spentAmount: 450, // 45.0% used
-      warningThresholdPercentage: 90,
+      categoryId: 'others',
+      allocatedAmount: 200,
+      spentAmount: 120,
+      warningThresholdPercentage: 80,
     },
   ],
-  notes: 'Fall Semester midterm month. Need to maintain 15% savings buffer for final term book projects.',
+  notes: 'Current month student budget plan.',
 };
 
 /**

@@ -1,6 +1,7 @@
 import React from 'react';
 import { View, Text } from 'react-native';
 import { Utensils, BookOpen, Bus, MoreHorizontal } from 'lucide-react-native';
+import AnimatedProgressBar from '@/components/ui/AnimatedProgressBar';
 import { colors } from '@/theme/colors';
 
 export interface CategoryBudgetItem {
@@ -122,15 +123,13 @@ export default function CategoryBudgetGrid({
 
             {/* Bottom Row: Micro Progress Bar & Percentage */}
             <View className="flex-row items-center justify-between">
-              <View className="flex-1 h-1.5 bg-[#192743] rounded-full overflow-hidden mr-2">
-                <View
-                  className="h-full rounded-full"
-                  style={{
-                    width: `${Math.min(percent, 100)}%`,
-                    backgroundColor: item.color,
-                  }}
-                />
-              </View>
+              <AnimatedProgressBar
+                percentage={percent}
+                height={6}
+                color={item.color}
+                backgroundColor="#192743"
+                style={{ flex: 1, marginRight: 8 }}
+              />
 
               <Text
                 className="text-[11px] font-bold"

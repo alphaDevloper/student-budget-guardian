@@ -3,6 +3,7 @@ import { View, Text, Pressable } from 'react-native';
 import { BarChart2, Calendar, Lightbulb, ChevronRight, ArrowDown } from 'lucide-react-native';
 import { SpendingTrendLineChart, CategoryPieChart } from './charts';
 import { DonutCategoryItem } from './CategoryDonutChart';
+import AnimatedProgressBar from '@/components/ui/AnimatedProgressBar';
 import { colors } from '@/theme/colors';
 
 interface OverviewTabProps {
@@ -96,17 +97,15 @@ export default function OverviewTab({
             {currencyPrefix}{remainingAmount.toLocaleString()}
           </Text>
 
-          {/* Progress Bar & Percentage */}
+          {/* Animated Progress Bar & Percentage */}
           <View className="flex-row items-center justify-between">
-            <View className="flex-1 h-2 bg-[#192743] rounded-full overflow-hidden mr-2">
-              <View
-                className="h-full rounded-full"
-                style={{
-                  width: `${Math.min(100, Math.max(0, budgetUtilizationPercent))}%`,
-                  backgroundColor: '#20D997',
-                }}
-              />
-            </View>
+            <AnimatedProgressBar
+              percentage={budgetUtilizationPercent}
+              height={8}
+              color="#20D997"
+              backgroundColor="#192743"
+              style={{ flex: 1, marginRight: 8 }}
+            />
             <Text className="text-[#20D997] text-xs font-bold font-inter-bold">
               {budgetUtilizationPercent}%
             </Text>

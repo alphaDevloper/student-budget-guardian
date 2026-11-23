@@ -1,6 +1,6 @@
 import { create } from 'zustand';
 import { persist, createJSONStorage } from 'zustand/middleware';
-import AsyncStorage from '@react-native-async-storage/async-storage';
+import { safeAsyncStorage } from './storage';
 import { Transaction } from '@/types/budget';
 import { SAMPLE_TRANSACTIONS } from '@/data/transactions';
 
@@ -88,7 +88,7 @@ export const useIncomeStore = create<IncomeState>()(
     }),
     {
       name: 'student-income-storage',
-      storage: createJSONStorage(() => AsyncStorage),
+      storage: createJSONStorage(() => safeAsyncStorage),
     }
   )
 );

@@ -1,5 +1,5 @@
-import React from 'react';
-import { View } from 'react-native';
+import React, { useEffect, useRef, useState } from 'react';
+import { View, Animated, Easing } from 'react-native';
 import Svg, { Circle, G } from 'react-native-svg';
 
 export interface DonutCategoryItem {
@@ -13,12 +13,17 @@ interface CategoryDonutChartProps {
   items: DonutCategoryItem[];
   size?: number;
   strokeWidth?: number;
+  duration?: number;
 }
 
+/**
+ * Animated circular donut chart with smooth segment transitions on category data changes
+ */
 export default function CategoryDonutChart({
   items,
   size = 124,
   strokeWidth = 16,
+  duration = 700,
 }: CategoryDonutChartProps) {
   const center = size / 2;
   const radius = (size - strokeWidth) / 2;
@@ -30,6 +35,28 @@ export default function CategoryDonutChart({
 
   // Gap between segments in SVG stroke units
   const gap = validItems.length > 1 ? 2.5 : 0;
+
+  // Animated sweep progress
+  const animVal = useRef(new Animated.Value(0)).current;
+  const [animProgress, setAnimProgress] = useState(0);
+
+  useEffect(() => {
+    animVal.setValue(0);
+    const listenerId = animVal.addListener(({ value }) => {
+      setAnimProgress(value);
+    });
+
+    Animated.timing(animVal, {
+      toValue: 1,
+      duration: duration,
+      easing: Easing.out(Easing.cubic),
+      useNativeDriver: false,
+    }).start();
+
+    return () => {
+      animVal.removeListener(listenerId);
+    };
+  }, [items, duration]);
 
   let currentOffset = 0;
 
@@ -47,9 +74,9 @@ export default function CategoryDonutChart({
             fill="transparent"
           />
 
-          {/* Category Segments */}
+          {/* Animated Category Segments */}
           {validItems.map((item) => {
-            const normalizedRatio = item.percentage / totalPercentage;
+            const normalizedRatio = (item.percentage / totalPercentage) * animProgress;
             const segmentLength = Math.max(0, normalizedRatio * circumference - gap);
             const offset = currentOffset;
             currentOffset += normalizedRatio * circumference;

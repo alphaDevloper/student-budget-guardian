@@ -68,8 +68,8 @@ export interface MonthlyBudget {
   id: string;
   month: number; // 1-12
   year: number; // e.g. 2026
-  currency: 'PKR';
-  totalIncome: number; // Total monthly student income in PKR
+  currency: 'PKR' | 'USD' | string;
+  totalIncome: number; // Total monthly student income
   totalBudget: number; // Total planned monthly budget limit
   categoryBudgets: CategoryBudget[];
   notes?: string;

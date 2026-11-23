@@ -1,5 +1,5 @@
 import React from 'react';
-import { View, Text, Dimensions, StyleSheet } from 'react-native';
+import { View, Text, Dimensions, StyleSheet, Animated, Easing } from 'react-native';
 import { PieChart } from 'react-native-chart-kit';
 
 const SCREEN_WIDTH = Dimensions.get('window').width;
@@ -64,13 +64,25 @@ export default function CategoryPieChart({
   paddingLeft = '0',
   center,
 }: CategoryPieChartProps) {
+  const fadeAnim = React.useRef(new Animated.Value(0)).current;
+
+  React.useEffect(() => {
+    fadeAnim.setValue(0.3);
+    Animated.timing(fadeAnim, {
+      toValue: 1,
+      duration: 550,
+      easing: Easing.out(Easing.cubic),
+      useNativeDriver: true,
+    }).start();
+  }, [data]);
+
   const chartConfig = {
     color: (opacity = 1) => `rgba(255, 255, 255, ${opacity})`,
     labelColor: (opacity = 1) => `rgba(143, 160, 192, ${opacity})`,
   };
 
   return (
-    <View style={styles.container}>
+    <Animated.View style={[styles.container, { opacity: fadeAnim }]}>
       {title && <Text style={styles.title}>{title}</Text>}
       <PieChart
         data={data}
@@ -84,7 +96,7 @@ export default function CategoryPieChart({
         hasLegend={hasLegend}
         style={styles.chart}
       />
-    </View>
+    </Animated.View>
   );
 }
 

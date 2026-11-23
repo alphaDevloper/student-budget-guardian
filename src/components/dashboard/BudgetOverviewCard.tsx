@@ -2,6 +2,7 @@ import React from 'react';
 import { View, Text, Pressable } from 'react-native';
 import { Wallet, ChevronDown } from 'lucide-react-native';
 import ProgressRing from '@/components/ui/ProgressRing';
+import AnimatedProgressBar from '@/components/ui/AnimatedProgressBar';
 import { colors } from '@/theme/colors';
 
 interface BudgetOverviewCardProps {
@@ -19,9 +20,17 @@ export default function BudgetOverviewCard({
   currencyPrefix = '$',
   onSelectPeriod,
 }: BudgetOverviewCardProps) {
-  const safeBudget = Math.max(1, totalBudget);
-  const progressRatio = Math.min(1, Math.max(0, remainingAmount / safeBudget));
-  const spentRatio = Math.min(1, Math.max(0, totalSpent / safeBudget));
+  // Validate and handle numeric values safely
+  const validBudget = isNaN(totalBudget) ? 0 : Math.max(0, totalBudget);
+  const validSpent = isNaN(totalSpent) ? 0 : Math.max(0, totalSpent);
+  const validRemaining = isNaN(remainingAmount)
+    ? Math.max(0, validBudget - validSpent)
+    : Math.max(0, remainingAmount);
+
+  // Dynamic progress circle calculation:
+  // Remaining budget as a percentage of the total budget (e.g. 150 / 300 = 0.5 -> 50% filled)
+  const remainingRatio = validBudget > 0 ? Math.min(1, Math.max(0, validRemaining / validBudget)) : 0;
+  const spentRatio = validBudget > 0 ? Math.min(1, Math.max(0, validSpent / validBudget)) : 0;
 
   return (
     <View
@@ -42,7 +51,7 @@ export default function BudgetOverviewCard({
         style={{ backgroundColor: colors.brightBlue }}
       />
 
-      {/* Top Row: Info & Progress Ring */}
+      {/* Top Row: Info & Animated Progress Ring */}
       <View className="flex-row items-center justify-between mb-4">
         {/* Left Side: Wallet, Title, Amount & Month Filter */}
         <View className="flex-1 pr-3">
@@ -64,7 +73,7 @@ export default function BudgetOverviewCard({
               style={{ fontFamily: 'Inter_700Bold' }}
             >
               {currencyPrefix}
-              {totalBudget.toLocaleString()}
+              {validBudget.toLocaleString()}
             </Text>
 
             <Pressable
@@ -82,28 +91,26 @@ export default function BudgetOverviewCard({
           </View>
         </View>
 
-        {/* Right Side: Circular Progress Ring */}
+        {/* Right Side: Animated Circular Progress Ring (dynamically represents remaining budget %) */}
         <ProgressRing
           size={78}
           strokeWidth={6.5}
-          progress={progressRatio}
+          progress={remainingRatio}
           color={colors.success}
           trackColor="#071E3D"
-          centerAmount={`${currencyPrefix}${remainingAmount.toLocaleString()}`}
+          centerAmount={`${currencyPrefix}${validRemaining.toLocaleString()}`}
           centerLabel="Left"
         />
       </View>
 
-      {/* Dual Progress Bar */}
-      <View className="w-full h-2 bg-[#06152B] rounded-full overflow-hidden mb-2">
-        <View
-          className="h-full rounded-full"
-          style={{
-            width: `${spentRatio * 100}%`,
-            backgroundColor: colors.success,
-          }}
-        />
-      </View>
+      {/* Dual Progress Bar with smooth animation on budget/spending changes */}
+      <AnimatedProgressBar
+        progress={spentRatio}
+        height={8}
+        color={colors.success}
+        backgroundColor="#06152B"
+        style={{ marginBottom: 8 }}
+      />
 
       {/* Bottom Labels */}
       <View className="flex-row justify-between items-center">
@@ -112,14 +119,14 @@ export default function BudgetOverviewCard({
           style={{ fontFamily: 'Inter_400Regular' }}
         >
           {currencyPrefix}
-          {totalSpent.toLocaleString()} Spent
+          {validSpent.toLocaleString()} Spent
         </Text>
         <Text
           className="text-success text-xs font-semibold"
           style={{ fontFamily: 'Inter_600SemiBold' }}
         >
           {currencyPrefix}
-          {remainingAmount.toLocaleString()} Left
+          {validRemaining.toLocaleString()} Left
         </Text>
       </View>
     </View>

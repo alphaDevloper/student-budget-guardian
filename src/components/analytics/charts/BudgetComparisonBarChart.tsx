@@ -1,5 +1,5 @@
 import React from 'react';
-import { View, Text, Dimensions, StyleSheet, LayoutChangeEvent } from 'react-native';
+import { View, Text, Dimensions, StyleSheet, LayoutChangeEvent, Animated, Easing } from 'react-native';
 import { BarChart } from 'react-native-chart-kit';
 
 const SCREEN_WIDTH = Dimensions.get('window').width;
@@ -36,6 +36,17 @@ export default function BudgetComparisonBarChart({
   title,
 }: BudgetComparisonBarChartProps) {
   const [layoutWidth, setLayoutWidth] = React.useState<number>(propWidth || SCREEN_WIDTH - 72);
+  const fadeAnim = React.useRef(new Animated.Value(0)).current;
+
+  React.useEffect(() => {
+    fadeAnim.setValue(0.3);
+    Animated.timing(fadeAnim, {
+      toValue: 1,
+      duration: 550,
+      easing: Easing.out(Easing.cubic),
+      useNativeDriver: true,
+    }).start();
+  }, [data]);
 
   const onLayout = (e: LayoutChangeEvent) => {
     if (!propWidth) {
@@ -73,7 +84,7 @@ export default function BudgetComparisonBarChart({
   };
 
   return (
-    <View onLayout={onLayout} style={styles.container}>
+    <Animated.View onLayout={onLayout} style={[styles.container, { opacity: fadeAnim }]}>
       {title && <Text style={styles.title}>{title}</Text>}
       <BarChart
         data={data}
@@ -87,7 +98,7 @@ export default function BudgetComparisonBarChart({
         withInnerLines={true}
         fromZero={true}
       />
-    </View>
+    </Animated.View>
   );
 }
 

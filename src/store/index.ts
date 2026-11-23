@@ -1,6 +1,7 @@
 export * from './budget-store';
 export * from './expense-store';
 export * from './income-store';
+export * from './storage';
 
 import { useBudgetStore } from './budget-store';
 import { useExpenseStore } from './expense-store';

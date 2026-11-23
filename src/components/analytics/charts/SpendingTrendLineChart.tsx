@@ -1,5 +1,5 @@
 import React from 'react';
-import { View, Text, Dimensions, StyleSheet, LayoutChangeEvent } from 'react-native';
+import { View, Text, Dimensions, StyleSheet, LayoutChangeEvent, Animated, Easing } from 'react-native';
 import { LineChart } from 'react-native-chart-kit';
 
 const SCREEN_WIDTH = Dimensions.get('window').width;
@@ -36,6 +36,17 @@ export default function SpendingTrendLineChart({
   color = '#168CFF',
 }: SpendingTrendLineChartProps) {
   const [layoutWidth, setLayoutWidth] = React.useState<number>(propWidth || SCREEN_WIDTH - 48);
+  const fadeAnim = React.useRef(new Animated.Value(0)).current;
+
+  React.useEffect(() => {
+    fadeAnim.setValue(0.3);
+    Animated.timing(fadeAnim, {
+      toValue: 1,
+      duration: 550,
+      easing: Easing.out(Easing.cubic),
+      useNativeDriver: true,
+    }).start();
+  }, [data]);
 
   const onLayout = (e: LayoutChangeEvent) => {
     if (!propWidth) {
@@ -93,7 +104,7 @@ export default function SpendingTrendLineChart({
   };
 
   return (
-    <View onLayout={onLayout} style={styles.container}>
+    <Animated.View onLayout={onLayout} style={[styles.container, { opacity: fadeAnim }]}>
       {title && <Text style={styles.title}>{title}</Text>}
       <LineChart
         data={chartData}
@@ -115,7 +126,7 @@ export default function SpendingTrendLineChart({
         withHorizontalLabels={showAxes}
         withDots={showAxes}
       />
-    </View>
+    </Animated.View>
   );
 }
 

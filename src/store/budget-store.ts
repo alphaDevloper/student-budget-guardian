@@ -1,6 +1,6 @@
 import { create } from 'zustand';
 import { persist, createJSONStorage } from 'zustand/middleware';
-import AsyncStorage from '@react-native-async-storage/async-storage';
+import { safeAsyncStorage } from './storage';
 import { MonthlyBudget, SpendingLimit, FinancialGoal } from '@/types/budget';
 import {
   SAMPLE_MONTHLY_BUDGET,
@@ -151,7 +151,7 @@ export const useBudgetStore = create<BudgetState>()(
     }),
     {
       name: 'student-budget-storage',
-      storage: createJSONStorage(() => AsyncStorage),
+      storage: createJSONStorage(() => safeAsyncStorage),
     }
   )
 );

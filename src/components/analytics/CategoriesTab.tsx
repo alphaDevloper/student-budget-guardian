@@ -1,6 +1,36 @@
 import React from 'react';
-import { View, Text, Pressable } from 'react-native';
+import { View, Text, Pressable, Animated, Easing } from 'react-native';
+import AnimatedProgressBar from '@/components/ui/AnimatedProgressBar';
 import { colors } from '@/theme/colors';
+
+function AnimatedSegment({ widthPct, color }: { widthPct: number; color: string }) {
+  const animatedValue = React.useRef(new Animated.Value(0)).current;
+
+  React.useEffect(() => {
+    Animated.timing(animatedValue, {
+      toValue: Math.max(0, widthPct),
+      duration: 600,
+      easing: Easing.out(Easing.cubic),
+      useNativeDriver: false,
+    }).start();
+  }, [widthPct]);
+
+  const width = animatedValue.interpolate({
+    inputRange: [0, 100],
+    outputRange: ['0%', '100%'],
+    extrapolate: 'clamp',
+  });
+
+  return (
+    <Animated.View
+      style={{
+        width,
+        backgroundColor: color,
+        height: '100%',
+      }}
+    />
+  );
+}
 
 export interface CategoryDetailItem {
   id: string;
@@ -51,12 +81,10 @@ export default function CategoriesTab({
           {categories.map((cat) => {
             const widthPct = totalAllocated > 0 ? (cat.spent / totalAllocated) * 100 : 0;
             return (
-              <View
+              <AnimatedSegment
                 key={cat.id}
-                style={{
-                  width: `${widthPct}%`,
-                  backgroundColor: cat.color,
-                }}
+                widthPct={widthPct}
+                color={cat.color}
               />
             );
           })}
@@ -99,16 +127,14 @@ export default function CategoriesTab({
                 </View>
               </View>
 
-              {/* Progress bar */}
-              <View className="w-full h-2 bg-[#192743] rounded-full overflow-hidden mb-2">
-                <View
-                  className="h-full rounded-full"
-                  style={{
-                    width: `${Math.min(100, percentUsed)}%`,
-                    backgroundColor: isOverBudget ? colors.danger : cat.color,
-                  }}
-                />
-              </View>
+              {/* Animated Progress bar */}
+              <AnimatedProgressBar
+                percentage={percentUsed}
+                height={8}
+                color={isOverBudget ? colors.danger : cat.color}
+                backgroundColor="#192743"
+                style={{ marginBottom: 8 }}
+              />
 
               <View className="flex-row justify-between items-center">
                 <Text className="text-text-secondary text-[11px] font-inter-regular">
