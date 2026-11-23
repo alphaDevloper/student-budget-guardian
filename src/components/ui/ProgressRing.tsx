@@ -1,6 +1,6 @@
 import React from 'react';
 import { View, Text } from 'react-native';
-import Svg, { Circle } from 'react-native-svg';
+import { ProgressChart } from 'react-native-chart-kit';
 
 interface ProgressRingProps {
   size?: number;
@@ -13,7 +13,7 @@ interface ProgressRingProps {
 }
 
 /**
- * High-performance circular SVG progress ring matching Design System v1.0
+ * High-performance circular progress ring built with React Native Chart Kit
  */
 export default function ProgressRing({
   size = 80,
@@ -24,10 +24,17 @@ export default function ProgressRing({
   centerAmount = '$320',
   centerLabel = 'Left',
 }: ProgressRingProps) {
-  const radius = (size - strokeWidth) / 2;
-  const circumference = 2 * Math.PI * radius;
   const safeProgress = Math.min(1, Math.max(0, isNaN(progress) ? 0 : progress));
-  const strokeDashoffset = circumference - safeProgress * circumference;
+
+  const chartConfig = {
+    backgroundColor: 'transparent',
+    backgroundGradientFrom: '#0A2552',
+    backgroundGradientTo: '#0A2552',
+    backgroundGradientFromOpacity: 0,
+    backgroundGradientToOpacity: 0,
+    color: (opacity = 1) => color,
+    strokeWidth: strokeWidth,
+  };
 
   return (
     <View
@@ -38,33 +45,19 @@ export default function ProgressRing({
         justifyContent: 'center',
       }}
     >
-      <Svg
+      <ProgressChart
+        data={[safeProgress]}
         width={size}
         height={size}
-        style={{ transform: [{ rotate: '-90deg' }] }}
-      >
-        {/* Background Track */}
-        <Circle
-          cx={size / 2}
-          cy={size / 2}
-          r={radius}
-          stroke={trackColor}
-          strokeWidth={strokeWidth}
-          fill="none"
-        />
-        {/* Active Progress Arc */}
-        <Circle
-          cx={size / 2}
-          cy={size / 2}
-          r={radius}
-          stroke={color}
-          strokeWidth={strokeWidth}
-          strokeDasharray={circumference}
-          strokeDashoffset={strokeDashoffset}
-          strokeLinecap="round"
-          fill="none"
-        />
-      </Svg>
+        strokeWidth={strokeWidth}
+        radius={(size - strokeWidth * 2) / 2}
+        chartConfig={chartConfig}
+        hideLegend={true}
+        style={{
+          paddingRight: 0,
+          paddingTop: 0,
+        }}
+      />
 
       {/* Centered Amount & Label */}
       <View
@@ -74,18 +67,32 @@ export default function ProgressRing({
           justifyContent: 'center',
         }}
       >
-        <Text
-          className="text-white text-base font-bold"
-          style={{ fontFamily: 'Inter_700Bold' }}
-        >
-          {centerAmount}
-        </Text>
-        <Text
-          className="text-text-secondary text-[11px] font-medium"
-          style={{ fontFamily: 'Inter_500Medium' }}
-        >
-          {centerLabel}
-        </Text>
+        {centerAmount ? (
+          <Text
+            style={{
+              color: '#FFFFFF',
+              fontSize: 14,
+              fontWeight: '700',
+              fontFamily: 'Inter_700Bold',
+              textAlign: 'center',
+            }}
+          >
+            {centerAmount}
+          </Text>
+        ) : null}
+        {centerLabel ? (
+          <Text
+            style={{
+              color: '#8FA0C0',
+              fontSize: 10,
+              fontFamily: 'Inter_400Regular',
+              textAlign: 'center',
+              marginTop: 1,
+            }}
+          >
+            {centerLabel}
+          </Text>
+        ) : null}
       </View>
     </View>
   );

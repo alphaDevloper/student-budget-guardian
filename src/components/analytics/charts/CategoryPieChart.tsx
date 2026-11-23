@@ -19,6 +19,8 @@ interface CategoryPieChartProps {
   title?: string;
   accessor?: string;
   hasLegend?: boolean;
+  paddingLeft?: string;
+  center?: [number, number];
 }
 
 const DEFAULT_DATA: CategoryPieItem[] = [
@@ -55,10 +57,12 @@ const DEFAULT_DATA: CategoryPieItem[] = [
 export default function CategoryPieChart({
   data = DEFAULT_DATA,
   width = SCREEN_WIDTH - 40,
-  height = 180,
+  height = 140,
   title,
   accessor = 'population',
   hasLegend = true,
+  paddingLeft = '0',
+  center,
 }: CategoryPieChartProps) {
   const chartConfig = {
     color: (opacity = 1) => `rgba(255, 255, 255, ${opacity})`,
@@ -75,7 +79,8 @@ export default function CategoryPieChart({
         chartConfig={chartConfig}
         accessor={accessor}
         backgroundColor="transparent"
-        paddingLeft="15"
+        paddingLeft={paddingLeft}
+        center={center}
         hasLegend={hasLegend}
         style={styles.chart}
       />
@@ -85,8 +90,10 @@ export default function CategoryPieChart({
 
 const styles = StyleSheet.create({
   container: {
-    borderRadius: 20,
+    borderRadius: 16,
     overflow: 'hidden',
+    alignItems: 'center',
+    justifyContent: 'center',
   },
   title: {
     color: '#FFFFFF',
@@ -96,7 +103,6 @@ const styles = StyleSheet.create({
     marginBottom: 8,
   },
   chart: {
-    borderRadius: 20,
-    marginVertical: 4,
+    borderRadius: 16,
   },
 });

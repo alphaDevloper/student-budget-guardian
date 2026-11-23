@@ -1,5 +1,5 @@
 import React from 'react';
-import { View, Text, Dimensions, StyleSheet } from 'react-native';
+import { View, Text, Dimensions, StyleSheet, LayoutChangeEvent } from 'react-native';
 import { BarChart } from 'react-native-chart-kit';
 
 const SCREEN_WIDTH = Dimensions.get('window').width;
@@ -30,35 +30,54 @@ const DEFAULT_DATA: BudgetBarData = {
 
 export default function BudgetComparisonBarChart({
   data = DEFAULT_DATA,
-  width = SCREEN_WIDTH - 40,
-  height = 190,
+  width: propWidth,
+  height = 180,
   currencyPrefix = '$',
   title,
 }: BudgetComparisonBarChartProps) {
+  const [layoutWidth, setLayoutWidth] = React.useState<number>(propWidth || SCREEN_WIDTH - 72);
+
+  const onLayout = (e: LayoutChangeEvent) => {
+    if (!propWidth) {
+      const w = e.nativeEvent.layout.width;
+      if (w > 0 && Math.abs(w - layoutWidth) > 2) {
+        setLayoutWidth(w);
+      }
+    }
+  };
+
+  const chartWidth = propWidth || layoutWidth;
+
   const chartConfig = {
-    backgroundColor: '#0B1B36',
+    backgroundColor: 'transparent',
     backgroundGradientFrom: '#0B1B36',
     backgroundGradientTo: '#111D35',
+    backgroundGradientFromOpacity: 0,
+    backgroundGradientToOpacity: 0,
     decimalPlaces: 0,
     color: (opacity = 1) => `rgba(32, 217, 151, ${opacity})`, // Green bars (#20D997)
     labelColor: (opacity = 1) => `rgba(143, 160, 192, ${opacity})`,
     style: {
-      borderRadius: 20,
+      borderRadius: 16,
     },
     propsForBackgroundLines: {
       stroke: '#192743',
       strokeDasharray: '4',
       strokeWidth: 1,
     },
-    barPercentage: 0.65,
+    propsForLabels: {
+      fontSize: 10,
+      fontFamily: 'Inter_400Regular',
+    },
+    barPercentage: 0.55,
   };
 
   return (
-    <View style={styles.container}>
+    <View onLayout={onLayout} style={styles.container}>
       {title && <Text style={styles.title}>{title}</Text>}
       <BarChart
         data={data}
-        width={width}
+        width={chartWidth}
         height={height}
         yAxisLabel={currencyPrefix}
         yAxisSuffix=""
@@ -66,6 +85,7 @@ export default function BudgetComparisonBarChart({
         style={styles.chart}
         showValuesOnTopOfBars={true}
         withInnerLines={true}
+        fromZero={true}
       />
     </View>
   );
@@ -73,8 +93,9 @@ export default function BudgetComparisonBarChart({
 
 const styles = StyleSheet.create({
   container: {
-    borderRadius: 20,
+    borderRadius: 16,
     overflow: 'hidden',
+    width: '100%',
   },
   title: {
     color: '#FFFFFF',
@@ -84,7 +105,7 @@ const styles = StyleSheet.create({
     marginBottom: 8,
   },
   chart: {
-    borderRadius: 20,
-    marginVertical: 4,
+    borderRadius: 16,
+    marginLeft: -12,
   },
 });

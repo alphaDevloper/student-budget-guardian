@@ -1,7 +1,7 @@
 import React from 'react';
 import { View, Text } from 'react-native';
 import { TrendingUp, ArrowDown, Award, Zap } from 'lucide-react-native';
-import SpendingWaveChart from './SpendingWaveChart';
+import { SpendingTrendLineChart, BudgetComparisonBarChart } from './charts';
 
 interface TrendsTabProps {
   totalSpent: number;
@@ -50,7 +50,19 @@ export default function TrendsTab({
           </View>
         </View>
 
-        <SpendingWaveChart height={70} color="#168CFF" gradientStartOpacity={0.4} />
+        {/* Chart Kit Line Chart for Trajectory */}
+        <View className="mt-1 -mx-2">
+          <SpendingTrendLineChart
+            height={80}
+            showAxes={false}
+            bezier={true}
+            color="#168CFF"
+            data={{
+              labels: ['W1', 'W2', 'W3', 'W4'],
+              values: [110, 135, 105, 130],
+            }}
+          />
+        </View>
 
         <View className="flex-row justify-between items-center mt-3 pt-3 border-t border-[#192743]">
           <Text className="text-text-secondary text-xs font-inter-regular">
@@ -95,43 +107,27 @@ export default function TrendsTab({
         </View>
       </View>
 
-      {/* 3. Weekly Distribution Bar Chart */}
+      {/* 3. Weekly Distribution Bar Chart using Chart Kit */}
       <View
-        className="card-surface p-5 rounded-2xl mb-4"
+        className="card-surface p-4 rounded-2xl mb-4"
         style={{ marginBottom: 16 }}
       >
-        <Text className="text-white text-sm font-bold font-inter-bold mb-4">
+        <Text className="text-white text-sm font-bold font-inter-bold mb-2">
           Weekly Spending Pattern
         </Text>
 
-        <View className="flex-row items-end justify-between h-28 pt-2">
-          {days.map((item) => {
-            const isPeak = item.day === 'Sat';
-            return (
-              <View key={item.day} className="items-center flex-1">
-                <Text className="text-text-secondary text-[10px] font-inter-regular mb-1">
-                  {currencyPrefix}{item.amount}
-                </Text>
-                <View className="w-4 h-16 bg-[#192743] rounded-full overflow-hidden justify-end">
-                  <View
-                    className="w-full rounded-full"
-                    style={{
-                      height: `${item.pct}%`,
-                      backgroundColor: isPeak ? '#168CFF' : '#20D997',
-                    }}
-                  />
-                </View>
-                <Text
-                  className={`text-[11px] mt-1.5 font-inter-medium ${
-                    isPeak ? 'text-[#168CFF] font-bold' : 'text-text-secondary'
-                  }`}
-                >
-                  {item.day}
-                </Text>
-              </View>
-            );
-          })}
-        </View>
+        <BudgetComparisonBarChart
+          height={170}
+          currencyPrefix={currencyPrefix}
+          data={{
+            labels: ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'],
+            datasets: [
+              {
+                data: [15, 22, 18, 30, 35, 45, 20],
+              },
+            ],
+          }}
+        />
       </View>
     </View>
   );

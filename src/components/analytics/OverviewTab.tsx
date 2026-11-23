@@ -1,8 +1,8 @@
 import React from 'react';
 import { View, Text, Pressable } from 'react-native';
 import { BarChart2, Calendar, Lightbulb, ChevronRight, ArrowDown } from 'lucide-react-native';
-import SpendingWaveChart from './SpendingWaveChart';
-import CategoryDonutChart, { DonutCategoryItem } from './CategoryDonutChart';
+import { SpendingTrendLineChart, CategoryPieChart } from './charts';
+import { DonutCategoryItem } from './CategoryDonutChart';
 import { colors } from '@/theme/colors';
 
 interface OverviewTabProps {
@@ -67,9 +67,18 @@ export default function OverviewTab({
           </View>
         </View>
 
-        {/* Wave Line Chart with Gradient Shading */}
-        <View className="mt-2 -mx-2">
-          <SpendingWaveChart height={75} color="#168CFF" gradientStartOpacity={0.35} />
+        {/* Chart Kit Line Chart */}
+        <View className="mt-1 -mx-2">
+          <SpendingTrendLineChart
+            height={80}
+            showAxes={false}
+            bezier={true}
+            color="#168CFF"
+            data={{
+              labels: ['1', '5', '10', '15', '20', '25', '30'],
+              values: [120, 180, 240, 310, 390, 440, 480],
+            }}
+          />
         </View>
       </View>
 
@@ -145,9 +154,20 @@ export default function OverviewTab({
         </Text>
 
         <View className="flex-row items-center justify-between">
-          {/* Donut Chart */}
-          <View className="mr-3">
-            <CategoryDonutChart items={categoryDonutItems} size={126} strokeWidth={16} />
+          {/* Chart Kit Category Pie Chart */}
+          <View className="mr-3 items-center justify-center" style={{ width: 126, height: 126 }}>
+            <CategoryPieChart
+              data={categoryDonutItems.map((item) => ({
+                name: item.name,
+                population: item.percentage,
+                color: item.color,
+                legendFontColor: '#FFFFFF',
+              }))}
+              width={126}
+              height={126}
+              hasLegend={false}
+              paddingLeft="31"
+            />
           </View>
 
           {/* Category Breakdown Legend */}
