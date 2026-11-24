@@ -14,9 +14,9 @@ interface BudgetOverviewCardProps {
 }
 
 export default function BudgetOverviewCard({
-  totalBudget = 800,
-  totalSpent = 480,
-  remainingAmount = 320,
+  totalBudget = 0,
+  totalSpent = 0,
+  remainingAmount = 0,
   currencyPrefix = '$',
   onSelectPeriod,
 }: BudgetOverviewCardProps) {

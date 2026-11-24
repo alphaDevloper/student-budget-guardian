@@ -121,3 +121,117 @@ export const calculateFinancialSummary = (
     transactionCount: transactions.length,
   };
 };
+
+/**
+ * Calculate weekly spending distribution across days of the week (Mon - Sun)
+ */
+export const calculateWeeklySpending = (
+  expenses: Transaction[]
+): { day: string; amount: number; pct: number }[] => {
+  const DAYS = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
+  const dailyTotals = [0, 0, 0, 0, 0, 0, 0];
+
+  if (Array.isArray(expenses)) {
+    expenses
+      .filter((tx) => tx.type === 'expense' && tx.amount > 0)
+      .forEach((tx) => {
+        const d = new Date(tx.date);
+        if (!isNaN(d.getTime())) {
+          // Mon = 0, Sun = 6
+          const dayIndex = (d.getDay() + 6) % 7;
+          dailyTotals[dayIndex] += tx.amount;
+        }
+      });
+  }
+
+  const maxAmount = Math.max(...dailyTotals, 0);
+
+  return DAYS.map((day, idx) => ({
+    day,
+    amount: dailyTotals[idx],
+    pct: maxAmount > 0 ? Math.round((dailyTotals[idx] / maxAmount) * 100) : 0,
+  }));
+};
+
+/**
+ * Determine the peak spending day and amount
+ */
+export const getPeakSpendingDay = (
+  expenses: Transaction[]
+): { day: string; amount: number } => {
+  const weekly = calculateWeeklySpending(expenses);
+  let peak = { day: 'None', amount: 0 };
+
+  const FULL_DAYS: Record<string, string> = {
+    Mon: 'Monday',
+    Tue: 'Tuesday',
+    Wed: 'Wednesday',
+    Thu: 'Thursday',
+    Fri: 'Friday',
+    Sat: 'Saturday',
+    Sun: 'Sunday',
+  };
+
+  weekly.forEach((item) => {
+    if (item.amount > peak.amount) {
+      peak = { day: FULL_DAYS[item.day] || item.day, amount: item.amount };
+    }
+  });
+
+  return peak;
+};
+
+/**
+ * Calculate monthly spending trajectory by week of month (W1, W2, W3, W4)
+ */
+export const calculateSpendingTrajectory = (
+  expenses: Transaction[]
+): { labels: string[]; values: number[] } => {
+  const values = [0, 0, 0, 0];
+  const labels = ['W1', 'W2', 'W3', 'W4'];
+
+  if (Array.isArray(expenses)) {
+    expenses
+      .filter((tx) => tx.type === 'expense' && tx.amount > 0)
+      .forEach((tx) => {
+        const d = new Date(tx.date);
+        if (!isNaN(d.getTime())) {
+          const dateNum = d.getDate();
+          if (dateNum <= 7) values[0] += tx.amount;
+          else if (dateNum <= 14) values[1] += tx.amount;
+          else if (dateNum <= 21) values[2] += tx.amount;
+          else values[3] += tx.amount;
+        }
+      });
+  }
+
+  return { labels, values };
+};
+
+/**
+ * Calculate cumulative spending trend across the month (Days 1, 5, 10, 15, 20, 25, 30)
+ */
+export const calculateSpendingTrend = (
+  expenses: Transaction[]
+): { labels: string[]; values: number[] } => {
+  const milestones = [1, 5, 10, 15, 20, 25, 30];
+  const labels = ['1', '5', '10', '15', '20', '25', '30'];
+  const values = [0, 0, 0, 0, 0, 0, 0];
+
+  if (Array.isArray(expenses)) {
+    const validExpenses = expenses.filter(
+      (tx) => tx.type === 'expense' && tx.amount > 0
+    );
+
+    milestones.forEach((day, index) => {
+      values[index] = validExpenses
+        .filter((tx) => {
+          const d = new Date(tx.date);
+          return !isNaN(d.getTime()) && d.getDate() <= day;
+        })
+        .reduce((sum, tx) => sum + tx.amount, 0);
+    });
+  }
+
+  return { labels, values };
+};

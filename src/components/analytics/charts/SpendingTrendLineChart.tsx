@@ -21,8 +21,8 @@ interface SpendingTrendLineChartProps {
 }
 
 const DEFAULT_DATA: SpendingTrendData = {
-  labels: ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'],
-  values: [15, 22, 18, 30, 35, 45, 20],
+  labels: ['1', '5', '10', '15', '20', '25', '30'],
+  values: [0, 0, 0, 0, 0, 0, 0],
 };
 
 export default function SpendingTrendLineChart({

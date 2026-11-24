@@ -2,11 +2,22 @@ import { create } from 'zustand';
 import { persist, createJSONStorage } from 'zustand/middleware';
 import { safeAsyncStorage } from './storage';
 import { MonthlyBudget, SpendingLimit, FinancialGoal } from '@/types/budget';
-import {
-  SAMPLE_MONTHLY_BUDGET,
-  SAMPLE_SPENDING_LIMITS,
-  SAMPLE_FINANCIAL_GOALS,
-} from '@/data/budgets';
+
+export const DEFAULT_MONTHLY_BUDGET: MonthlyBudget = {
+  id: `budget-${new Date().getFullYear()}-${String(new Date().getMonth() + 1).padStart(2, '0')}`,
+  month: new Date().getMonth() + 1,
+  year: new Date().getFullYear(),
+  currency: 'USD',
+  totalIncome: 0,
+  totalBudget: 0,
+  categoryBudgets: [
+    { categoryId: 'food', allocatedAmount: 0, spentAmount: 0, warningThresholdPercentage: 80 },
+    { categoryId: 'study', allocatedAmount: 0, spentAmount: 0, warningThresholdPercentage: 80 },
+    { categoryId: 'transport', allocatedAmount: 0, spentAmount: 0, warningThresholdPercentage: 80 },
+    { categoryId: 'other', allocatedAmount: 0, spentAmount: 0, warningThresholdPercentage: 80 },
+  ],
+  notes: '',
+};
 
 export interface BudgetState {
   monthlyBudget: MonthlyBudget;
@@ -34,9 +45,9 @@ export interface BudgetState {
 export const useBudgetStore = create<BudgetState>()(
   persist(
     (set) => ({
-      monthlyBudget: SAMPLE_MONTHLY_BUDGET,
-      spendingLimits: SAMPLE_SPENDING_LIMITS,
-      financialGoals: SAMPLE_FINANCIAL_GOALS,
+      monthlyBudget: DEFAULT_MONTHLY_BUDGET,
+      spendingLimits: [],
+      financialGoals: [],
 
       setTotalBudget: (amount) =>
         set((state) => ({
@@ -84,9 +95,9 @@ export const useBudgetStore = create<BudgetState>()(
 
       resetBudgetToDefault: () =>
         set({
-          monthlyBudget: SAMPLE_MONTHLY_BUDGET,
-          spendingLimits: SAMPLE_SPENDING_LIMITS,
-          financialGoals: SAMPLE_FINANCIAL_GOALS,
+          monthlyBudget: DEFAULT_MONTHLY_BUDGET,
+          spendingLimits: [],
+          financialGoals: [],
         }),
 
       addSpendingLimit: (limit) =>
@@ -150,7 +161,7 @@ export const useBudgetStore = create<BudgetState>()(
         })),
     }),
     {
-      name: 'student-budget-storage',
+      name: 'student-budget-v2',
       storage: createJSONStorage(() => safeAsyncStorage),
     }
   )

@@ -2,7 +2,6 @@ import { create } from 'zustand';
 import { persist, createJSONStorage } from 'zustand/middleware';
 import { safeAsyncStorage } from './storage';
 import { Transaction } from '@/types/budget';
-import { SAMPLE_TRANSACTIONS } from '@/data/transactions';
 
 export interface NewExpensePayload {
   title: string;
@@ -28,14 +27,10 @@ export interface ExpenseState {
   resetExpensesToDefault: () => void;
 }
 
-const initialExpenses: Transaction[] = SAMPLE_TRANSACTIONS.filter(
-  (tx) => tx.type === 'expense'
-);
-
 export const useExpenseStore = create<ExpenseState>()(
   persist(
     (set, get) => ({
-      expenses: initialExpenses,
+      expenses: [],
 
       addExpense: (payload) => {
         const newExpense: Transaction = {
@@ -100,11 +95,11 @@ export const useExpenseStore = create<ExpenseState>()(
       },
 
       resetExpensesToDefault: () => {
-        set({ expenses: initialExpenses });
+        set({ expenses: [] });
       },
     }),
     {
-      name: 'student-expense-storage',
+      name: 'student-expense-v2',
       storage: createJSONStorage(() => safeAsyncStorage),
     }
   )

@@ -2,7 +2,6 @@ import { create } from 'zustand';
 import { persist, createJSONStorage } from 'zustand/middleware';
 import { safeAsyncStorage } from './storage';
 import { Transaction } from '@/types/budget';
-import { SAMPLE_TRANSACTIONS } from '@/data/transactions';
 
 export interface NewIncomePayload {
   title: string;
@@ -25,14 +24,10 @@ export interface IncomeState {
   resetIncomesToDefault: () => void;
 }
 
-const initialIncomes: Transaction[] = SAMPLE_TRANSACTIONS.filter(
-  (tx) => tx.type === 'income'
-);
-
 export const useIncomeStore = create<IncomeState>()(
   persist(
     (set, get) => ({
-      incomes: initialIncomes,
+      incomes: [],
 
       addIncome: (payload) => {
         const newIncome: Transaction = {
@@ -83,11 +78,11 @@ export const useIncomeStore = create<IncomeState>()(
       },
 
       resetIncomesToDefault: () => {
-        set({ incomes: initialIncomes });
+        set({ incomes: [] });
       },
     }),
     {
-      name: 'student-income-storage',
+      name: 'student-income-v2',
       storage: createJSONStorage(() => safeAsyncStorage),
     }
   )

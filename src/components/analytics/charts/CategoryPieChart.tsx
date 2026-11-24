@@ -23,36 +23,7 @@ interface CategoryPieChartProps {
   center?: [number, number];
 }
 
-const DEFAULT_DATA: CategoryPieItem[] = [
-  {
-    name: 'Food & Dining',
-    population: 40,
-    color: '#FF9F43',
-    legendFontColor: '#FFFFFF',
-    legendFontSize: 12,
-  },
-  {
-    name: 'Books & Study',
-    population: 20,
-    color: '#FFB938',
-    legendFontColor: '#FFFFFF',
-    legendFontSize: 12,
-  },
-  {
-    name: 'Transport',
-    population: 15,
-    color: '#20D997',
-    legendFontColor: '#FFFFFF',
-    legendFontSize: 12,
-  },
-  {
-    name: 'Others',
-    population: 25,
-    color: '#965BFF',
-    legendFontColor: '#FFFFFF',
-    legendFontSize: 12,
-  },
-];
+const DEFAULT_DATA: CategoryPieItem[] = [];
 
 export default function CategoryPieChart({
   data = DEFAULT_DATA,
@@ -75,6 +46,37 @@ export default function CategoryPieChart({
       useNativeDriver: true,
     }).start();
   }, [data]);
+
+  const hasData = Array.isArray(data) && data.some((d) => (Number(d[accessor as keyof CategoryPieItem]) || 0) > 0);
+
+  if (!hasData) {
+    return (
+      <View style={[styles.container, { width, height }]}>
+        <View
+          style={{
+            width: Math.min(width, height) - 10,
+            height: Math.min(width, height) - 10,
+            borderRadius: 999,
+            borderWidth: 10,
+            borderColor: '#192743',
+            alignItems: 'center',
+            justifyContent: 'center',
+          }}
+        >
+          <Text
+            style={{
+              color: '#8FA0C0',
+              fontSize: 10,
+              fontFamily: 'Inter_400Regular',
+              textAlign: 'center',
+            }}
+          >
+            No data
+          </Text>
+        </View>
+      </View>
+    );
+  }
 
   const chartConfig = {
     color: (opacity = 1) => `rgba(255, 255, 255, ${opacity})`,

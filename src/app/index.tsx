@@ -17,6 +17,7 @@ import {
   useBudgetStore,
   useExpenseStore,
   useIncomeStore,
+  useOnboardingStore,
   useFinancialMetrics,
   safeAsyncStorage,
 } from '@/store';
@@ -39,119 +40,204 @@ const PAYMENT_METHODS: PaymentMethod[] = [
 ];
 
 export default function Index() {
-  // Default to true so Home screen UI is immediately visible on launch
-  const [isOnboardingComplete, setIsOnboardingComplete] = useState(true);
+  const {
+    isOnboardingCompleted,
+    hasAddedFirstExpense,
+    setOnboardingCompleted,
+    completeFirstTimeFlow,
+    resetOnboarding,
+  } = useOnboardingStore();
+
+  const [isReplayingOnboarding, setIsReplayingOnboarding] = useState(false);
   const [activeTab, setActiveTab] = useState<TabKey>('home');
   const insets = useSafeAreaInsets();
 
   useEffect(() => {
-    Promise.resolve(safeAsyncStorage.getItem('@student_guardian_onboarding_complete'))
-      .then((saved) => {
-        if (saved === 'false') {
-          setIsOnboardingComplete(false);
+    // One-time purge of legacy sample transactions stored in AsyncStorage
+    Promise.resolve(safeAsyncStorage.getItem('@student_guardian_v2_purged'))
+      .then((purged) => {
+        if (!purged) {
+          useExpenseStore.getState().resetExpensesToDefault();
+          useIncomeStore.getState().resetIncomesToDefault();
+          useBudgetStore.getState().resetBudgetToDefault();
+          resetOnboarding();
+          Promise.all([
+            safeAsyncStorage.removeItem('student-expense-storage'),
+            safeAsyncStorage.removeItem('student-budget-storage'),
+            safeAsyncStorage.removeItem('student-income-storage'),
+            safeAsyncStorage.removeItem('student-expense-v2'),
+            safeAsyncStorage.removeItem('student-budget-v2'),
+            safeAsyncStorage.removeItem('student-income-v2'),
+            safeAsyncStorage.removeItem('student-onboarding-v2'),
+          ])
+            .then(() => {
+              safeAsyncStorage.setItem('@student_guardian_v2_purged', 'true');
+            })
+            .catch(() => {});
         }
       })
       .catch(() => {});
   }, []);
 
-  const handleCompleteOnboarding = async () => {
-    setIsOnboardingComplete(true);
-    try {
-      await safeAsyncStorage.setItem('@student_guardian_onboarding_complete', 'true');
-    } catch {}
-  };
-
-  const handleReplayOnboarding = async () => {
-    setIsOnboardingComplete(false);
-    try {
-      await safeAsyncStorage.setItem('@student_guardian_onboarding_complete', 'false');
-    } catch {}
-  };
-
   // Zustand Stores
   const { monthlyBudget } = useBudgetStore();
   const { expenses, addExpense, deleteExpense } = useExpenseStore();
   const { incomes } = useIncomeStore();
+
+  // If user has recorded expenses, ensure hasAddedFirstExpense is marked true
+  useEffect(() => {
+    if (expenses.length > 0 && !hasAddedFirstExpense) {
+      completeFirstTimeFlow();
+    }
+  }, [expenses.length, hasAddedFirstExpense]);
+
+  const handleClearAllData = () => {
+    Alert.alert(
+      'Clear All Data',
+      'Are you sure you want to delete all expenses, income records, and budget allocations? This will also reset the onboarding flow.',
+      [
+        { text: 'Cancel', style: 'cancel' },
+        {
+          text: 'Clear Everything',
+          style: 'destructive',
+          onPress: async () => {
+            useExpenseStore.getState().resetExpensesToDefault();
+            useIncomeStore.getState().resetIncomesToDefault();
+            useBudgetStore.getState().resetBudgetToDefault();
+            resetOnboarding();
+            setIsReplayingOnboarding(false);
+            setActiveTab('home');
+            try {
+              const keys = [
+                'student-expense-v2',
+                'student-budget-v2',
+                'student-income-v2',
+                'student-onboarding-v2',
+                'student-expense-storage',
+                'student-budget-storage',
+                'student-income-storage',
+              ];
+              await Promise.all(keys.map((k) => safeAsyncStorage.removeItem(k)));
+            } catch {}
+            Alert.alert('Cleared', 'All stored data and onboarding progress have been reset.');
+          },
+        },
+      ]
+    );
+  };
   const {
+    totalIncome,
     totalExpenses,
     remainingBudget,
     utilization,
     savingsRate,
     categorySpending,
     dailyAverage,
+    weeklySpending,
+    spendingTrajectory,
+    spendingTrend,
+    peakDay,
+    expenseCount,
+    incomeCount,
   } = useFinancialMetrics();
 
   // Currency prefix from user profile or budget ($ by default as in design)
   const currencyPrefix = CURRENT_USER.currencyPrefix || '$';
 
-  // Format category budget items for CategoryBudgetGrid
+  // Helper to get allocated budget for a category from real monthly budget
+  const getCategoryAllocation = (catId: string) => {
+    return (
+      monthlyBudget?.categoryBudgets?.find((cb) => cb.categoryId === catId)?.allocatedAmount || 0
+    );
+  };
+
+  // Format category budget items for CategoryBudgetGrid (purely real data from store)
   const categoryGridItems = [
     {
       id: 'food',
       name: 'Food & Dining',
-      spent: categorySpending['food'] !== undefined ? categorySpending['food'] : 120,
-      allocated: 200,
+      spent: categorySpending['food'] || 0,
+      allocated: getCategoryAllocation('food'),
       color: colors.warning,
     },
     {
       id: 'study',
       name: 'Books & Study',
-      spent: categorySpending['study'] !== undefined ? categorySpending['study'] : 60,
-      allocated: 100,
+      spent: categorySpending['study'] || 0,
+      allocated: getCategoryAllocation('study'),
       color: colors.brightBlue,
     },
     {
       id: 'transport',
       name: 'Transport',
-      spent: categorySpending['transport'] !== undefined ? categorySpending['transport'] : 40,
-      allocated: 80,
+      spent: categorySpending['transport'] || 0,
+      allocated: getCategoryAllocation('transport'),
       color: colors.success,
     },
     {
       id: 'other',
       name: 'Others',
       spent:
-        ((categorySpending['other'] || 0) + (categorySpending['bills'] || 0)) || 60,
-      allocated: 120,
+        (categorySpending['other'] || 0) +
+        (categorySpending['bills'] || 0) +
+        (categorySpending['entertainment'] || 0) +
+        (categorySpending['health'] || 0) +
+        (categorySpending['shopping'] || 0),
+      allocated: getCategoryAllocation('other'),
       color: colors.purple,
     },
   ];
 
-  // Real-time financial calculations connected to Zustand stores & AsyncStorage
-  const totalMonthlyBudget =
-    monthlyBudget?.totalBudget !== undefined ? monthlyBudget.totalBudget : 800;
-  const totalMonthlySpent = totalExpenses > 0 ? totalExpenses : 480;
+  // Real-time financial calculations connected exclusively to Zustand stores & AsyncStorage
+  const totalMonthlyBudget = monthlyBudget?.totalBudget || 0;
+  const totalMonthlySpent = totalExpenses;
   const totalRemainingBudget = Math.max(0, totalMonthlyBudget - totalMonthlySpent);
 
-  const foodSpent = categorySpending['food'] !== undefined ? categorySpending['food'] : 192;
-  const studySpent = categorySpending['study'] !== undefined ? categorySpending['study'] : 96;
-  const transportSpent = categorySpending['transport'] !== undefined ? categorySpending['transport'] : 72;
+  const foodSpent = categorySpending['food'] || 0;
+  const studySpent = categorySpending['study'] || 0;
+  const transportSpent = categorySpending['transport'] || 0;
   const otherSpent =
-    ((categorySpending['other'] || 0) + (categorySpending['bills'] || 0)) || 120;
+    (categorySpending['other'] || 0) +
+    (categorySpending['bills'] || 0) +
+    (categorySpending['entertainment'] || 0) +
+    (categorySpending['health'] || 0) +
+    (categorySpending['shopping'] || 0);
 
   const analyticsDonutItems = [
     {
       id: 'food',
       name: 'Food & Dining',
-      percentage: Math.round((foodSpent / totalMonthlySpent) * 100) || 40,
+      percentage:
+        totalMonthlySpent > 0
+          ? Math.round((foodSpent / totalMonthlySpent) * 100)
+          : 0,
       color: '#FF9F43',
     },
     {
       id: 'study',
       name: 'Books & Study',
-      percentage: Math.round((studySpent / totalMonthlySpent) * 100) || 20,
+      percentage:
+        totalMonthlySpent > 0
+          ? Math.round((studySpent / totalMonthlySpent) * 100)
+          : 0,
       color: '#FFB938',
     },
     {
       id: 'transport',
       name: 'Transport',
-      percentage: Math.round((transportSpent / totalMonthlySpent) * 100) || 15,
+      percentage:
+        totalMonthlySpent > 0
+          ? Math.round((transportSpent / totalMonthlySpent) * 100)
+          : 0,
       color: '#20D997',
     },
     {
       id: 'others',
       name: 'Others',
-      percentage: Math.round((otherSpent / totalMonthlySpent) * 100) || 25,
+      percentage:
+        totalMonthlySpent > 0
+          ? Math.round((otherSpent / totalMonthlySpent) * 100)
+          : 0,
       color: '#965BFF',
     },
   ];
@@ -161,28 +247,28 @@ export default function Index() {
       id: 'food',
       name: 'Food & Dining',
       spent: foodSpent,
-      allocated: 320,
+      allocated: getCategoryAllocation('food'),
       color: '#FF9F43',
     },
     {
       id: 'study',
       name: 'Books & Study',
       spent: studySpent,
-      allocated: 160,
+      allocated: getCategoryAllocation('study'),
       color: '#FFB938',
     },
     {
       id: 'transport',
       name: 'Transport',
       spent: transportSpent,
-      allocated: 120,
+      allocated: getCategoryAllocation('transport'),
       color: '#20D997',
     },
     {
       id: 'others',
       name: 'Others',
       spent: otherSpent,
-      allocated: 200,
+      allocated: getCategoryAllocation('other'),
       color: '#965BFF',
     },
   ];
@@ -192,12 +278,35 @@ export default function Index() {
     (a, b) => new Date(b.date).getTime() - new Date(a.date).getTime()
   );
 
-  // 1. Onboarding Screen
-  if (!isOnboardingComplete) {
+  // 1. First-Time User Flow: Onboarding Screen
+  if (!isOnboardingCompleted || isReplayingOnboarding) {
     return (
       <OnboardingScreen
-        onGetStarted={handleCompleteOnboarding}
-        onSkip={handleCompleteOnboarding}
+        onGetStarted={() => {
+          setIsReplayingOnboarding(false);
+          setOnboardingCompleted(true);
+        }}
+        onSkip={() => {
+          setIsReplayingOnboarding(false);
+          setOnboardingCompleted(true);
+        }}
+      />
+    );
+  }
+
+  // 2. Mandatory First Expense Screen (Secured first-time user flow)
+  if (!hasAddedFirstExpense) {
+    return (
+      <AddExpenseScreen
+        isFirstExpenseFlow={true}
+        currencyPrefix={currencyPrefix}
+        onBack={() => {
+          setOnboardingCompleted(false);
+        }}
+        onSuccess={() => {
+          completeFirstTimeFlow();
+          setActiveTab('home');
+        }}
       />
     );
   }
@@ -214,12 +323,29 @@ export default function Index() {
         transactions={allTransactions}
         activeTab={activeTab}
         onTabPress={setActiveTab}
-        onNotificationPress={() =>
-          Alert.alert(
-            'Notifications',
-            "You have 1 budget alert: You've used 60% of your Food & Dining budget."
-          )
-        }
+        onNotificationPress={() => {
+          if (totalMonthlySpent === 0) {
+            Alert.alert(
+              'Notifications',
+              'No new alerts. Your budget is in great shape!'
+            );
+          } else if (totalMonthlyBudget > 0 && totalMonthlySpent > totalMonthlyBudget) {
+            Alert.alert(
+              'Budget Alert',
+              `You have exceeded your total monthly budget of ${currencyPrefix}${totalMonthlyBudget}!`
+            );
+          } else if (totalMonthlyBudget > 0 && totalMonthlySpent >= totalMonthlyBudget * 0.8) {
+            Alert.alert(
+              'Budget Warning',
+              `You have used ${Math.round((totalMonthlySpent / totalMonthlyBudget) * 100)}% of your monthly budget.`
+            );
+          } else {
+            Alert.alert(
+              'Notifications',
+              "Keep it up! You're managing your budget well."
+            );
+          }
+        }}
         onSeeAllTransactions={() => setActiveTab('analytics')}
         onPressTransaction={(tx) => {
           Alert.alert(
@@ -262,19 +388,37 @@ export default function Index() {
         currencyPrefix={currencyPrefix}
         categoryDonutItems={analyticsDonutItems}
         categoryDetailItems={analyticsCategoryDetails}
-        dailyAverage={dailyAverage || 16}
+        dailyAverage={dailyAverage}
         budgetUtilizationPercent={
           totalMonthlyBudget > 0
             ? Math.round((totalMonthlySpent / totalMonthlyBudget) * 100)
-            : 67
+            : 0
         }
+        spendingTrend={spendingTrend}
+        spendingTrajectory={spendingTrajectory}
+        weeklySpending={weeklySpending}
+        highestSpendingDay={peakDay.day}
+        highestSpendingAmount={peakDay.amount}
         activeTab={activeTab}
         onTabPress={setActiveTab}
         onPressInsight={() => {
-          Alert.alert(
-            "You're on track!",
-            'Great job keeping your expenses under control this month. You have spent $480 of your $800 monthly budget, leaving $320 remaining.'
-          );
+          if (totalMonthlySpent === 0) {
+            Alert.alert(
+              'Budget Status',
+              'You have no expenses recorded yet. Tap + to add an expense.'
+            );
+          } else if (totalMonthlyBudget === 0) {
+            Alert.alert(
+              'Budget Status',
+              `You have spent ${currencyPrefix}${totalMonthlySpent}. Set a monthly budget to track your target limit.`
+            );
+          } else {
+            const pct = Math.round((totalMonthlySpent / totalMonthlyBudget) * 100);
+            Alert.alert(
+              pct > 100 ? 'Over Budget' : pct > 80 ? 'Budget Warning' : "You're on track!",
+              `You have spent ${currencyPrefix}${totalMonthlySpent} of your ${currencyPrefix}${totalMonthlyBudget} budget (${pct}% used), leaving ${currencyPrefix}${totalRemainingBudget} remaining.`
+            );
+          }
         }}
       />
     );
@@ -291,7 +435,7 @@ export default function Index() {
           Settings
         </Text>
         <Pressable
-          onPress={() => setIsOnboardingComplete(false)}
+          onPress={() => setIsReplayingOnboarding(true)}
           className="px-3 py-1 rounded-full bg-surface border border-border"
         >
           <Text className="text-bright-blue text-xs font-semibold">
@@ -321,8 +465,17 @@ export default function Index() {
         </View>
 
         <Pressable
-          onPress={handleReplayOnboarding}
-          className="w-full btn-secondary py-3.5 rounded-full items-center justify-center mt-4"
+          onPress={handleClearAllData}
+          className="w-full py-3.5 rounded-full items-center justify-center mt-3 bg-danger/15 border border-danger/30 active:opacity-80"
+        >
+          <Text className="text-danger text-sm font-semibold">
+            Clear All Data & Reset to 0
+          </Text>
+        </Pressable>
+
+        <Pressable
+          onPress={() => setIsReplayingOnboarding(true)}
+          className="w-full btn-secondary py-3.5 rounded-full items-center justify-center mt-3"
         >
           <Text className="text-white text-sm font-semibold">
             ← Replay Onboarding Screen

@@ -20,10 +20,10 @@ interface BudgetComparisonBarChartProps {
 }
 
 const DEFAULT_DATA: BudgetBarData = {
-  labels: ['Food', 'Study', 'Trans.', 'Other'],
+  labels: ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'],
   datasets: [
     {
-      data: [120, 60, 40, 60],
+      data: [0, 0, 0, 0, 0, 0, 0],
     },
   ],
 };

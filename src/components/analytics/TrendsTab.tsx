@@ -4,30 +4,35 @@ import { TrendingUp, ArrowDown, Award, Zap } from 'lucide-react-native';
 import { SpendingTrendLineChart, BudgetComparisonBarChart } from './charts';
 
 interface TrendsTabProps {
-  totalSpent: number;
-  dailyAverage: number;
+  totalSpent?: number;
+  dailyAverage?: number;
   currencyPrefix?: string;
   highestSpendingDay?: string;
   highestSpendingAmount?: number;
+  weeklySpending?: { day: string; amount: number; pct: number }[];
+  spendingTrajectory?: { labels: string[]; values: number[] };
 }
 
 export default function TrendsTab({
-  totalSpent = 480,
-  dailyAverage = 16,
+  totalSpent = 0,
+  dailyAverage = 0,
   currencyPrefix = '$',
-  highestSpendingDay = 'Saturday',
-  highestSpendingAmount = 45,
+  highestSpendingDay = 'None',
+  highestSpendingAmount = 0,
+  weeklySpending = [
+    { day: 'Mon', amount: 0, pct: 0 },
+    { day: 'Tue', amount: 0, pct: 0 },
+    { day: 'Wed', amount: 0, pct: 0 },
+    { day: 'Thu', amount: 0, pct: 0 },
+    { day: 'Fri', amount: 0, pct: 0 },
+    { day: 'Sat', amount: 0, pct: 0 },
+    { day: 'Sun', amount: 0, pct: 0 },
+  ],
+  spendingTrajectory = {
+    labels: ['W1', 'W2', 'W3', 'W4'],
+    values: [0, 0, 0, 0],
+  },
 }: TrendsTabProps) {
-  // Weekly spending breakdown (sample student schedule)
-  const days = [
-    { day: 'Mon', amount: 15, pct: 35 },
-    { day: 'Tue', amount: 22, pct: 50 },
-    { day: 'Wed', amount: 18, pct: 40 },
-    { day: 'Thu', amount: 30, pct: 70 },
-    { day: 'Fri', amount: 35, pct: 80 },
-    { day: 'Sat', amount: highestSpendingAmount, pct: 100 },
-    { day: 'Sun', amount: 20, pct: 45 },
-  ];
 
   return (
     <View>
@@ -42,7 +47,7 @@ export default function TrendsTab({
               Spending Trajectory
             </Text>
             <Text className="text-white text-xl font-bold font-inter-bold mt-0.5">
-              Consistent & Stable
+              {totalSpent > 0 ? 'Consistent & Stable' : 'No spending yet'}
             </Text>
           </View>
           <View className="w-8 h-8 rounded-lg bg-[#152A50] border border-[#263754] items-center justify-center">
@@ -57,10 +62,7 @@ export default function TrendsTab({
             showAxes={false}
             bezier={true}
             color="#168CFF"
-            data={{
-              labels: ['W1', 'W2', 'W3', 'W4'],
-              values: [110, 135, 105, 130],
-            }}
+            data={spendingTrajectory}
           />
         </View>
 
@@ -71,7 +73,7 @@ export default function TrendsTab({
           <View className="flex-row items-center">
             <ArrowDown size={12} color="#20D997" strokeWidth={2.5} />
             <Text className="text-[#20D997] text-xs font-bold font-inter-bold ml-1">
-              12% less spending
+              {totalSpent > 0 ? 'Active tracking' : '0% spending'}
             </Text>
           </View>
         </View>
@@ -120,10 +122,10 @@ export default function TrendsTab({
           height={170}
           currencyPrefix={currencyPrefix}
           data={{
-            labels: ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'],
+            labels: weeklySpending.map((w) => w.day),
             datasets: [
               {
-                data: [15, 22, 18, 30, 35, 45, 20],
+                data: weeklySpending.map((w) => w.amount),
               },
             ],
           }}

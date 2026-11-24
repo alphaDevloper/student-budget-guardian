@@ -36,9 +36,10 @@ import { useExpenseStore } from '@/store';
 import { colors } from '@/theme/colors';
 
 interface AddExpenseScreenProps {
-  onBack: () => void;
+  onBack?: () => void;
   onSuccess?: () => void;
   currencyPrefix?: string;
+  isFirstExpenseFlow?: boolean;
 }
 
 function getCategoryIcon(iconName: string, color: string = '#168CFF') {
@@ -69,6 +70,7 @@ export default function AddExpenseScreen({
   onBack,
   onSuccess,
   currencyPrefix = '$',
+  isFirstExpenseFlow = false,
 }: AddExpenseScreenProps) {
   const insets = useSafeAreaInsets();
   const { addExpense } = useExpenseStore();
@@ -114,7 +116,7 @@ export default function AddExpenseScreen({
 
       if (onSuccess) {
         onSuccess();
-      } else {
+      } else if (onBack) {
         onBack();
       }
     } catch (error) {
@@ -276,7 +278,11 @@ export default function AddExpenseScreen({
               }}
             >
               <Text className="text-white text-base font-bold font-inter-bold">
-                Add Expense
+                {isSubmitting
+                  ? 'Saving...'
+                  : isFirstExpenseFlow
+                  ? 'Save First Expense'
+                  : 'Add Expense'}
               </Text>
               <ArrowRight size={18} color="#FFFFFF" strokeWidth={2.5} style={{ marginLeft: 8 }} />
             </Pressable>

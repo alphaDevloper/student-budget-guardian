@@ -21,30 +21,30 @@ interface AnalyticsScreenProps {
   categoryDetailItems?: CategoryDetailItem[];
   dailyAverage?: number;
   budgetUtilizationPercent?: number;
+  spendingTrend?: { labels: string[]; values: number[] };
+  spendingTrajectory?: { labels: string[]; values: number[] };
+  weeklySpending?: { day: string; amount: number; pct: number }[];
+  highestSpendingDay?: string;
+  highestSpendingAmount?: number;
   activeTab?: TabKey;
   onTabPress?: (tab: TabKey) => void;
   onPressInsight?: () => void;
 }
 
 export default function AnalyticsScreen({
-  totalBudget = 800,
-  totalSpent = 480,
-  remainingAmount = 320,
+  totalBudget = 0,
+  totalSpent = 0,
+  remainingAmount = 0,
   currencyPrefix = '$',
-  categoryDonutItems = [
-    { id: 'food', name: 'Food & Dining', percentage: 40, color: '#FF9F43' },
-    { id: 'study', name: 'Books & Study', percentage: 20, color: '#FFB938' },
-    { id: 'transport', name: 'Transport', percentage: 15, color: '#20D997' },
-    { id: 'others', name: 'Others', percentage: 25, color: '#965BFF' },
-  ],
-  categoryDetailItems = [
-    { id: 'food', name: 'Food & Dining', spent: 192, allocated: 320, color: '#FF9F43' },
-    { id: 'study', name: 'Books & Study', spent: 96, allocated: 160, color: '#FFB938' },
-    { id: 'transport', name: 'Transport', spent: 72, allocated: 120, color: '#20D997' },
-    { id: 'others', name: 'Others', spent: 120, allocated: 200, color: '#965BFF' },
-  ],
-  dailyAverage = 16,
-  budgetUtilizationPercent = 67,
+  categoryDonutItems = [],
+  categoryDetailItems = [],
+  dailyAverage = 0,
+  budgetUtilizationPercent = 0,
+  spendingTrend,
+  spendingTrajectory,
+  weeklySpending,
+  highestSpendingDay = 'None',
+  highestSpendingAmount = 0,
   activeTab = 'analytics',
   onTabPress = () => {},
   onPressInsight,
@@ -148,6 +148,7 @@ export default function AnalyticsScreen({
             currencyPrefix={currencyPrefix}
             categoryDonutItems={categoryDonutItems}
             budgetUtilizationPercent={budgetUtilizationPercent}
+            spendingTrend={spendingTrend}
             onPressInsight={onPressInsight}
             onPressCategoryCard={() => setSelectedSubTab('categories')}
           />
@@ -165,6 +166,10 @@ export default function AnalyticsScreen({
             totalSpent={currentTotalSpent}
             dailyAverage={dailyAverage}
             currencyPrefix={currencyPrefix}
+            highestSpendingDay={highestSpendingDay}
+            highestSpendingAmount={highestSpendingAmount}
+            weeklySpending={weeklySpending}
+            spendingTrajectory={spendingTrajectory}
           />
         )}
       </ScrollView>

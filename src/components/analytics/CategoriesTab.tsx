@@ -47,12 +47,13 @@ interface CategoriesTabProps {
 }
 
 export default function CategoriesTab({
-  categories,
+  categories = [],
   currencyPrefix = '$',
   onSelectCategory,
 }: CategoriesTabProps) {
-  const totalAllocated = categories.reduce((sum, c) => sum + c.allocated, 0);
-  const totalSpent = categories.reduce((sum, c) => sum + c.spent, 0);
+  const safeCategories = Array.isArray(categories) ? categories : [];
+  const totalAllocated = safeCategories.reduce((sum, c) => sum + c.allocated, 0);
+  const totalSpent = safeCategories.reduce((sum, c) => sum + c.spent, 0);
 
   return (
     <View>
@@ -78,7 +79,7 @@ export default function CategoriesTab({
 
         {/* Multi-segment distribution bar */}
         <View className="w-full h-2.5 bg-[#192743] rounded-full overflow-hidden flex-row">
-          {categories.map((cat) => {
+          {safeCategories.map((cat) => {
             const widthPct = totalAllocated > 0 ? (cat.spent / totalAllocated) * 100 : 0;
             return (
               <AnimatedSegment
@@ -92,8 +93,18 @@ export default function CategoriesTab({
       </View>
 
       {/* Individual Category Cards */}
-      <View>
-        {categories.map((cat) => {
+      {safeCategories.length === 0 ? (
+        <View className="card-surface p-6 rounded-2xl items-center justify-center my-4">
+          <Text className="text-white text-sm font-semibold text-center mb-1 font-inter-semibold">
+            No category budgets yet
+          </Text>
+          <Text className="text-text-secondary text-xs text-center font-inter-regular">
+            Category allocations and expenses will appear here once added.
+          </Text>
+        </View>
+      ) : (
+        <View>
+          {safeCategories.map((cat) => {
           const percentUsed =
             cat.allocated > 0 ? Math.round((cat.spent / cat.allocated) * 100) : 0;
           const remaining = Math.max(0, cat.allocated - cat.spent);
@@ -153,6 +164,7 @@ export default function CategoriesTab({
           );
         })}
       </View>
+      )}
     </View>
   );
 }

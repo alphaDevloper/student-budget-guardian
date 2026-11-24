@@ -21,29 +21,29 @@ const DEFAULT_CATEGORIES: CategoryBudgetItem[] = [
   {
     id: 'food',
     name: 'Food & Dining',
-    spent: 120,
-    allocated: 200,
+    spent: 0,
+    allocated: 0,
     color: colors.warning, // #FF9F43
   },
   {
     id: 'study',
     name: 'Books & Study',
-    spent: 60,
-    allocated: 100,
+    spent: 0,
+    allocated: 0,
     color: colors.brightBlue, // #168CFF
   },
   {
     id: 'transport',
     name: 'Transport',
-    spent: 40,
-    allocated: 80,
+    spent: 0,
+    allocated: 0,
     color: colors.success, // #20D997
   },
   {
     id: 'other',
     name: 'Others',
-    spent: 60,
-    allocated: 120,
+    spent: 0,
+    allocated: 0,
     color: colors.purple, // #965BFF
   },
 ];
@@ -69,8 +69,7 @@ export default function CategoryBudgetGrid({
   return (
     <View className="flex-row flex-wrap justify-between my-4">
       {categories.map((item) => {
-        const safeAllocated = Math.max(1, item.allocated);
-        const percent = Math.round((item.spent / safeAllocated) * 100);
+        const percent = item.allocated > 0 ? Math.round((item.spent / item.allocated) * 100) : 0;
 
         return (
           <View

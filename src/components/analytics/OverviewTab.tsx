@@ -7,28 +7,34 @@ import AnimatedProgressBar from '@/components/ui/AnimatedProgressBar';
 import { colors } from '@/theme/colors';
 
 interface OverviewTabProps {
-  totalBudget: number;
-  totalSpent: number;
-  remainingAmount: number;
+  totalBudget?: number;
+  totalSpent?: number;
+  remainingAmount?: number;
   currencyPrefix?: string;
-  categoryDonutItems: DonutCategoryItem[];
+  categoryDonutItems?: DonutCategoryItem[];
   budgetUtilizationPercent?: number;
+  spendingTrend?: { labels: string[]; values: number[] };
+  changePercent?: number | null;
   onPressInsight?: () => void;
   onPressCategoryCard?: () => void;
 }
 
 export default function OverviewTab({
-  totalBudget = 800,
-  totalSpent = 480,
-  remainingAmount = 320,
+  totalBudget = 0,
+  totalSpent = 0,
+  remainingAmount = 0,
   currencyPrefix = '$',
-  categoryDonutItems,
-  budgetUtilizationPercent = 67,
+  categoryDonutItems = [],
+  budgetUtilizationPercent = 0,
+  spendingTrend,
+  changePercent,
   onPressInsight,
   onPressCategoryCard,
 }: OverviewTabProps) {
-  // Format percentage change (down 12% as in reference design)
-  const changePercent = 12;
+  const trendData = spendingTrend || {
+    labels: ['1', '5', '10', '15', '20', '25', '30'],
+    values: [0, 0, 0, 0, 0, 0, 0],
+  };
 
   return (
     <View>
@@ -52,13 +58,21 @@ export default function OverviewTab({
                 {currencyPrefix}{totalSpent.toLocaleString()}
               </Text>
 
-              {/* Percentage Change Badge */}
-              <View className="ml-3 px-2 py-0.5 rounded-md bg-[#20D997]/15 border border-[#20D997]/30 flex-row items-center">
-                <ArrowDown size={11} color="#20D997" strokeWidth={2.5} />
-                <Text className="text-[#20D997] text-xs font-bold font-inter-bold ml-0.5">
-                  {changePercent}%
-                </Text>
-              </View>
+              {/* Percentage / Status Badge */}
+              {totalSpent > 0 ? (
+                <View className="ml-3 px-2 py-0.5 rounded-md bg-[#20D997]/15 border border-[#20D997]/30 flex-row items-center">
+                  <ArrowDown size={11} color="#20D997" strokeWidth={2.5} />
+                  <Text className="text-[#20D997] text-xs font-bold font-inter-bold ml-0.5">
+                    {changePercent !== undefined && changePercent !== null ? `${changePercent}%` : 'Active'}
+                  </Text>
+                </View>
+              ) : (
+                <View className="ml-3 px-2 py-0.5 rounded-md bg-[#152A50] border border-[#263754] flex-row items-center">
+                  <Text className="text-text-secondary text-xs font-medium font-inter-medium">
+                    0% used
+                  </Text>
+                </View>
+              )}
             </View>
           </View>
 
@@ -75,10 +89,7 @@ export default function OverviewTab({
             showAxes={false}
             bezier={true}
             color="#168CFF"
-            data={{
-              labels: ['1', '5', '10', '15', '20', '25', '30'],
-              values: [120, 180, 240, 310, 390, 440, 480],
-            }}
+            data={trendData}
           />
         </View>
       </View>
@@ -215,10 +226,22 @@ export default function OverviewTab({
           {/* Text Content */}
           <View className="flex-1">
             <Text className="text-white text-sm font-bold font-inter-bold">
-              You're on track!
+              {totalSpent === 0
+                ? 'Ready to track!'
+                : budgetUtilizationPercent > 100
+                ? 'Budget exceeded!'
+                : budgetUtilizationPercent > 80
+                ? 'Budget warning!'
+                : "You're on track!"}
             </Text>
-            <Text className="text-text-secondary text-xs font-inter-regular mt-0.5">
-              Great job keeping your expenses under control this month.
+            <Text className="text-text-secondary text-xs font-inter-regular mt-0.5 leading-4">
+              {totalSpent === 0
+                ? 'Record expenses with the + button to see spending insights.'
+                : budgetUtilizationPercent > 100
+                ? `You have exceeded your total budget by ${currencyPrefix}${(totalSpent - totalBudget).toLocaleString()}.`
+                : budgetUtilizationPercent > 80
+                ? `You have used ${budgetUtilizationPercent}% of your budget limit.`
+                : 'Great job keeping your expenses under control this month.'}
             </Text>
           </View>
         </View>

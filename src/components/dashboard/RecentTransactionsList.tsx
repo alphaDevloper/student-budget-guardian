@@ -1,6 +1,6 @@
 import React from 'react';
 import { View, Text, Pressable } from 'react-native';
-import { ArrowRight, Utensils, BookOpen, Bus, MoreHorizontal } from 'lucide-react-native';
+import { ArrowRight, Utensils, BookOpen, Bus, MoreHorizontal, Receipt } from 'lucide-react-native';
 import { Transaction } from '@/types/budget';
 import { colors } from '@/theme/colors';
 import { formatTransactionDate } from '@/utils/date';
@@ -12,44 +12,13 @@ interface RecentTransactionsListProps {
   onPressTransaction?: (tx: Transaction) => void;
 }
 
-const DEFAULT_TRANSACTIONS: Partial<Transaction>[] = [
-  {
-    id: 'tx-burger-king',
-    title: 'Burger King',
-    amount: 8.99,
-    type: 'expense',
-    categoryId: 'food',
-    date: new Date().toISOString(),
-    note: 'Food & Dining • Today, 7:30 PM',
-  },
-  {
-    id: 'tx-book-store',
-    title: 'Book Store',
-    amount: 24.50,
-    type: 'expense',
-    categoryId: 'study',
-    date: new Date(Date.now() - 86400000).toISOString(),
-    note: 'Books & Study • Yesterday, 5:20 PM',
-  },
-  {
-    id: 'tx-bus-fare',
-    title: 'Bus Fare',
-    amount: 1.50,
-    type: 'expense',
-    categoryId: 'transport',
-    date: new Date(Date.now() - 90000000).toISOString(),
-    note: 'Transport • Yesterday, 3:15 PM',
-  },
-];
-
 export default function RecentTransactionsList({
-  transactions,
+  transactions = [],
   currencyPrefix = '$',
   onSeeAll,
   onPressTransaction,
 }: RecentTransactionsListProps) {
-  const displayList =
-    transactions && transactions.length > 0 ? transactions : DEFAULT_TRANSACTIONS;
+  const displayList = Array.isArray(transactions) ? transactions : [];
 
   const renderTransactionIcon = (title: string, categoryId?: string) => {
     const t = title.toLowerCase();
@@ -113,13 +82,32 @@ export default function RecentTransactionsList({
           backgroundColor: '#111D35',
           borderRadius: 20,
           paddingHorizontal: 16,
-          paddingVertical: 8,
+          paddingVertical: displayList.length === 0 ? 20 : 8,
           borderColor: '#263754',
           borderWidth: 1,
           marginBottom: 16,
         }}
       >
-        {displayList.slice(0, 5).map((tx, index) => {
+        {displayList.length === 0 ? (
+          <View className="items-center justify-center py-5">
+            <View className="w-12 h-12 rounded-2xl bg-[#152A50] items-center justify-center mb-2.5 border border-[#263754]">
+              <Receipt size={22} color="#8FA0C0" />
+            </View>
+            <Text
+              className="text-white text-sm font-semibold text-center mb-1"
+              style={{ fontFamily: 'Inter_600SemiBold' }}
+            >
+              No transactions yet
+            </Text>
+            <Text
+              className="text-text-secondary text-xs text-center max-w-[240px]"
+              style={{ fontFamily: 'Inter_400Regular' }}
+            >
+              Add your first expense to start tracking your student budget.
+            </Text>
+          </View>
+        ) : (
+          displayList.slice(0, 5).map((tx, index) => {
           const isExpense = tx.type !== 'income';
           const subtitle =
             tx.note && tx.note.includes('•')
@@ -167,7 +155,7 @@ export default function RecentTransactionsList({
               </Text>
             </Pressable>
           );
-        })}
+        }))}
       </View>
     </View>
   );
