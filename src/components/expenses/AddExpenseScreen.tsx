@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   View,
   Text,
@@ -17,6 +17,7 @@ import {
   Calendar as CalendarIcon,
   FileText,
   ArrowRight,
+  Wallet,
   Utensils,
   BookOpen,
   Bus,
@@ -32,7 +33,7 @@ import CategoryPickerModal from './CategoryPickerModal';
 import DatePickerModal, { formatExpenseDisplayDate } from './DatePickerModal';
 import { EXPENSE_CATEGORIES } from '@/data/categories';
 import { Category, Transaction } from '@/types/budget';
-import { useExpenseStore } from '@/store';
+import { useExpenseStore, useBudgetStore } from '@/store';
 import { colors } from '@/theme/colors';
 
 interface AddExpenseScreenProps {
@@ -73,7 +74,8 @@ export default function AddExpenseScreen({
   isFirstExpenseFlow = false,
 }: AddExpenseScreenProps) {
   const insets = useSafeAreaInsets();
-  const { addExpense } = useExpenseStore();
+  const { addExpense, expenses } = useExpenseStore();
+  const { monthlyBudget, setTotalBudget, updateCategoryBudget } = useBudgetStore();
 
   // Form State
   const [selectedCategory, setSelectedCategory] = useState<Category>(EXPENSE_CATEGORIES[0]); // Default: Food & Dining
@@ -82,10 +84,94 @@ export default function AddExpenseScreen({
   const [isoDate, setIsoDate] = useState(new Date().toISOString());
   const [note, setNote] = useState('');
 
+  // Budget Input State
+  const [monthlyBudgetString, setMonthlyBudgetString] = useState(
+    monthlyBudget?.totalBudget && monthlyBudget.totalBudget > 0
+      ? String(monthlyBudget.totalBudget)
+      : ''
+  );
+
+  const getCategoryAllocatedAmount = (catId: string) => {
+    return (
+      monthlyBudget?.categoryBudgets?.find((cb) => cb.categoryId === catId)?.allocatedAmount || 0
+    );
+  };
+
+  const [categoryBudgetString, setCategoryBudgetString] = useState(
+    getCategoryAllocatedAmount(EXPENSE_CATEGORIES[0].id) > 0
+      ? String(getCategoryAllocatedAmount(EXPENSE_CATEGORIES[0].id))
+      : ''
+  );
+
+  // Sync category budget input when selectedCategory changes or categoryBudgets change
+  useEffect(() => {
+    const alloc = getCategoryAllocatedAmount(selectedCategory.id);
+    setCategoryBudgetString(alloc > 0 ? String(alloc) : '');
+  }, [selectedCategory.id, monthlyBudget?.categoryBudgets]);
+
+  // Sync total monthly budget string if store updates externally
+  useEffect(() => {
+    if (monthlyBudget?.totalBudget !== undefined) {
+      const current = parseFloat(monthlyBudgetString) || 0;
+      if (current !== monthlyBudget.totalBudget) {
+        setMonthlyBudgetString(
+          monthlyBudget.totalBudget > 0 ? String(monthlyBudget.totalBudget) : ''
+        );
+      }
+    }
+  }, [monthlyBudget?.totalBudget]);
+
   // Modals State
   const [isCategoryModalVisible, setIsCategoryModalVisible] = useState(false);
   const [isDateModalVisible, setIsDateModalVisible] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
+
+  // Dynamic Real-Time Financial Calculations from Actual Transactions
+  const totalMonthlySpent = expenses
+    .filter((e) => e.type === 'expense')
+    .reduce((sum, e) => sum + (e.amount || 0), 0);
+
+  const categorySpent = expenses
+    .filter((e) => e.type === 'expense' && e.categoryId === selectedCategory.id)
+    .reduce((sum, e) => sum + (e.amount || 0), 0);
+
+  const currentTotalBudgetNum = parseFloat(monthlyBudgetString) || 0;
+  const currentCategoryBudgetNum = parseFloat(categoryBudgetString) || 0;
+
+  const totalRemaining = currentTotalBudgetNum - totalMonthlySpent;
+  const categoryRemaining = currentCategoryBudgetNum - categorySpent;
+
+  const totalUtilizationPct =
+    currentTotalBudgetNum > 0
+      ? Math.min(100, Math.round((totalMonthlySpent / currentTotalBudgetNum) * 100))
+      : 0;
+
+  const categoryUtilizationPct =
+    currentCategoryBudgetNum > 0
+      ? Math.min(100, Math.round((categorySpent / currentCategoryBudgetNum) * 100))
+      : 0;
+
+  const handleMonthlyBudgetChange = (text: string) => {
+    const clean = text.replace(/[^0-9.]/g, '');
+    setMonthlyBudgetString(clean);
+    const num = parseFloat(clean);
+    if (!isNaN(num)) {
+      setTotalBudget(num);
+    } else if (clean === '') {
+      setTotalBudget(0);
+    }
+  };
+
+  const handleCategoryBudgetChange = (text: string) => {
+    const clean = text.replace(/[^0-9.]/g, '');
+    setCategoryBudgetString(clean);
+    const num = parseFloat(clean);
+    if (!isNaN(num)) {
+      updateCategoryBudget(selectedCategory.id, num);
+    } else if (clean === '') {
+      updateCategoryBudget(selectedCategory.id, 0);
+    }
+  };
 
   const handleSubmit = () => {
     const cleanAmountStr = amount.replace(/[^0-9.]/g, '');
@@ -99,6 +185,16 @@ export default function AddExpenseScreen({
     setIsSubmitting(true);
 
     try {
+      // Ensure budget inputs are persisted to store
+      const finalMonthlyBudget = parseFloat(monthlyBudgetString);
+      if (!isNaN(finalMonthlyBudget)) {
+        setTotalBudget(finalMonthlyBudget);
+      }
+      const finalCategoryBudget = parseFloat(categoryBudgetString);
+      if (!isNaN(finalCategoryBudget)) {
+        updateCategoryBudget(selectedCategory.id, finalCategoryBudget);
+      }
+
       // Determine appropriate title (e.g. note if provided, or category name)
       const expenseTitle = note.trim() ? note.trim() : selectedCategory.name;
 
@@ -110,7 +206,7 @@ export default function AddExpenseScreen({
         note: note.trim() || undefined,
       });
 
-      // Clear form and navigate back
+      // Clear expense amount and note, while keeping budgets intact
       setAmount('');
       setNote('');
 
@@ -190,7 +286,7 @@ export default function AddExpenseScreen({
               >
                 <View className="flex-row items-center flex-1 mr-2">
                   <View className="w-10 h-10 items-center justify-center mr-3">
-                    {getCategoryIcon(selectedCategory.icon, '#168CFF')}
+                    {getCategoryIcon(selectedCategory.icon, selectedCategory.color || '#168CFF')}
                   </View>
                   <View className="flex-1">
                     <Text className="text-text-secondary text-xs font-medium font-inter-medium">
@@ -204,14 +300,88 @@ export default function AddExpenseScreen({
                 <ChevronDown size={18} color="#8FA0C0" />
               </Pressable>
 
-              {/* Card 2: Amount Input */}
+              {/* Card 2: Selected Category Budget Input + Spent & Remaining Display */}
+              <View className="card-surface p-4 rounded-2xl border border-[#263754] mb-3">
+                <View className="flex-row items-center">
+                  <View className="w-10 h-10 items-center justify-center mr-3">
+                    {getCategoryIcon(selectedCategory.icon, selectedCategory.color || '#168CFF')}
+                  </View>
+                  <View className="flex-1">
+                    <Text className="text-text-secondary text-xs font-medium font-inter-medium">
+                      {selectedCategory.name} Budget
+                    </Text>
+                    <View className="flex-row items-center mt-0.5">
+                      <Text className="text-white text-sm font-semibold mr-1">{currencyPrefix}</Text>
+                      <TextInput
+                        value={categoryBudgetString}
+                        onChangeText={handleCategoryBudgetChange}
+                        placeholder="Set category budget (e.g. 100)"
+                        placeholderTextColor="#5C7194"
+                        keyboardType="decimal-pad"
+                        className="text-white text-sm font-semibold font-inter-semibold p-0 flex-1"
+                      />
+                    </View>
+                  </View>
+                </View>
+
+                {/* Category Spent & Remaining Row */}
+                <View className="mt-3 pt-3 border-t border-[#192743] flex-row items-center justify-between">
+                  <View className="flex-row items-center">
+                    <Text className="text-text-secondary text-xs font-inter-medium">Spent: </Text>
+                    <Text className="text-white text-xs font-semibold font-inter-semibold">
+                      {currencyPrefix}{categorySpent.toLocaleString()}
+                    </Text>
+                  </View>
+                  <View className="flex-row items-center">
+                    <Text className="text-text-secondary text-xs font-inter-medium">Remaining: </Text>
+                    <Text
+                      className={`text-xs font-semibold font-inter-semibold ${
+                        categoryRemaining < 0
+                          ? 'text-[#FF4D4D]'
+                          : currentCategoryBudgetNum > 0
+                          ? 'text-[#20D997]'
+                          : 'text-text-secondary'
+                      }`}
+                    >
+                      {currentCategoryBudgetNum > 0
+                        ? categoryRemaining < 0
+                          ? `${currencyPrefix}0 (${currencyPrefix}${Math.abs(categoryRemaining).toLocaleString()} over)`
+                          : `${currencyPrefix}${categoryRemaining.toLocaleString()}`
+                        : `${currencyPrefix}0`}
+                    </Text>
+                  </View>
+                </View>
+
+                {/* Visual Category Budget Progress Bar */}
+                {currentCategoryBudgetNum > 0 && (
+                  <View className="mt-2.5">
+                    <View className="h-1.5 w-full bg-[#111D35] rounded-full overflow-hidden">
+                      <View
+                        style={{
+                          width: `${categoryUtilizationPct}%`,
+                          backgroundColor:
+                            categorySpent > currentCategoryBudgetNum
+                              ? '#FF4D4D'
+                              : categorySpent >= currentCategoryBudgetNum * 0.8
+                              ? '#FF9F43'
+                              : selectedCategory.color || '#168CFF',
+                          height: '100%',
+                          borderRadius: 9999,
+                        }}
+                      />
+                    </View>
+                  </View>
+                )}
+              </View>
+
+              {/* Card 3: Expense Amount Input */}
               <View className="card-surface p-4 rounded-2xl flex-row items-center border border-[#263754] mb-3">
                 <View className="w-10 h-10 items-center justify-center mr-3">
                   <DollarSign size={22} color="#168CFF" />
                 </View>
                 <View className="flex-1">
                   <Text className="text-text-secondary text-xs font-medium font-inter-medium">
-                    Amount
+                    Expense Amount
                   </Text>
                   <TextInput
                     value={amount}
@@ -224,7 +394,81 @@ export default function AddExpenseScreen({
                 </View>
               </View>
 
-              {/* Card 3: Date Selector */}
+              {/* Card 4: Total Monthly Budget Input + Spent & Remaining Display */}
+              <View className="card-surface p-4 rounded-2xl border border-[#263754] mb-3">
+                <View className="flex-row items-center">
+                  <View className="w-10 h-10 items-center justify-center mr-3">
+                    <Wallet size={22} color="#168CFF" />
+                  </View>
+                  <View className="flex-1">
+                    <Text className="text-text-secondary text-xs font-medium font-inter-medium">
+                      Total Monthly Budget
+                    </Text>
+                    <View className="flex-row items-center mt-0.5">
+                      <Text className="text-white text-sm font-semibold mr-1">{currencyPrefix}</Text>
+                      <TextInput
+                        value={monthlyBudgetString}
+                        onChangeText={handleMonthlyBudgetChange}
+                        placeholder="Set monthly budget (e.g. 500)"
+                        placeholderTextColor="#5C7194"
+                        keyboardType="decimal-pad"
+                        className="text-white text-sm font-semibold font-inter-semibold p-0 flex-1"
+                      />
+                    </View>
+                  </View>
+                </View>
+
+                {/* Total Spent & Remaining Row */}
+                <View className="mt-3 pt-3 border-t border-[#192743] flex-row items-center justify-between">
+                  <View className="flex-row items-center">
+                    <Text className="text-text-secondary text-xs font-inter-medium">Spent: </Text>
+                    <Text className="text-white text-xs font-semibold font-inter-semibold">
+                      {currencyPrefix}{totalMonthlySpent.toLocaleString()}
+                    </Text>
+                  </View>
+                  <View className="flex-row items-center">
+                    <Text className="text-text-secondary text-xs font-inter-medium">Remaining: </Text>
+                    <Text
+                      className={`text-xs font-semibold font-inter-semibold ${
+                        totalRemaining < 0
+                          ? 'text-[#FF4D4D]'
+                          : currentTotalBudgetNum > 0
+                          ? 'text-[#20D997]'
+                          : 'text-text-secondary'
+                      }`}
+                    >
+                      {currentTotalBudgetNum > 0
+                        ? totalRemaining < 0
+                          ? `${currencyPrefix}0 (${currencyPrefix}${Math.abs(totalRemaining).toLocaleString()} over)`
+                          : `${currencyPrefix}${totalRemaining.toLocaleString()}`
+                        : `${currencyPrefix}0`}
+                    </Text>
+                  </View>
+                </View>
+
+                {/* Visual Total Budget Progress Bar */}
+                {currentTotalBudgetNum > 0 && (
+                  <View className="mt-2.5">
+                    <View className="h-1.5 w-full bg-[#111D35] rounded-full overflow-hidden">
+                      <View
+                        style={{
+                          width: `${totalUtilizationPct}%`,
+                          backgroundColor:
+                            totalMonthlySpent > currentTotalBudgetNum
+                              ? '#FF4D4D'
+                              : totalMonthlySpent >= currentTotalBudgetNum * 0.8
+                              ? '#FF9F43'
+                              : '#087BFF',
+                          height: '100%',
+                          borderRadius: 9999,
+                        }}
+                      />
+                    </View>
+                  </View>
+                )}
+              </View>
+
+              {/* Card 5: Date Selector */}
               <Pressable
                 onPress={() => setIsDateModalVisible(true)}
                 className="card-surface p-4 rounded-2xl flex-row items-center justify-between border border-[#263754] active:bg-[#192743] mb-3"
@@ -245,7 +489,7 @@ export default function AddExpenseScreen({
                 <ChevronDown size={18} color="#8FA0C0" />
               </Pressable>
 
-              {/* Card 4: Note Input (Optional) */}
+              {/* Card 6: Note Input (Optional) */}
               <View className="card-surface p-4 rounded-2xl flex-row items-center border border-[#263754] mb-4">
                 <View className="w-10 h-10 items-center justify-center mr-3">
                   <FileText size={22} color="#168CFF" />

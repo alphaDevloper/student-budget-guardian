@@ -183,7 +183,12 @@ export default function Index() {
         (categorySpending['entertainment'] || 0) +
         (categorySpending['health'] || 0) +
         (categorySpending['shopping'] || 0),
-      allocated: getCategoryAllocation('other'),
+      allocated:
+        getCategoryAllocation('other') +
+        getCategoryAllocation('bills') +
+        getCategoryAllocation('entertainment') +
+        getCategoryAllocation('health') +
+        getCategoryAllocation('shopping'),
       color: colors.purple,
     },
   ];
@@ -268,7 +273,12 @@ export default function Index() {
       id: 'others',
       name: 'Others',
       spent: otherSpent,
-      allocated: getCategoryAllocation('other'),
+      allocated:
+        getCategoryAllocation('other') +
+        getCategoryAllocation('bills') +
+        getCategoryAllocation('entertainment') +
+        getCategoryAllocation('health') +
+        getCategoryAllocation('shopping'),
       color: '#965BFF',
     },
   ];
