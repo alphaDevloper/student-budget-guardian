@@ -1,16 +1,22 @@
-import React, { useState } from 'react';
-import { View, Text, Pressable, ScrollView, Platform } from 'react-native';
-import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
-import { Calendar, ChevronDown } from 'lucide-react-native';
-import BottomTabBar, { TabKey } from '@/components/dashboard/BottomTabBar';
-import OverviewTab from './OverviewTab';
-import CategoriesTab, { CategoryDetailItem } from './CategoriesTab';
-import TrendsTab from './TrendsTab';
-import MonthSelectorModal, { MonthPeriod, PERIOD_LABELS } from './MonthSelectorModal';
-import { DonutCategoryItem } from './CategoryDonutChart';
-import { colors } from '@/theme/colors';
+import BottomTabBar, { TabKey } from "@/components/dashboard/BottomTabBar";
+import { colors } from "@/theme/colors";
+import { Calendar, ChevronDown } from "lucide-react-native";
+import { useState } from "react";
+import { Pressable, ScrollView, Text, View } from "react-native";
+import {
+  SafeAreaView,
+  useSafeAreaInsets,
+} from "react-native-safe-area-context";
+import CategoriesTab, { CategoryDetailItem } from "./CategoriesTab";
+import { DonutCategoryItem } from "./CategoryDonutChart";
+import MonthSelectorModal, {
+  MonthPeriod,
+  PERIOD_LABELS,
+} from "./MonthSelectorModal";
+import OverviewTab from "./OverviewTab";
+import TrendsTab from "./TrendsTab";
 
-export type AnalyticsSubTab = 'overview' | 'categories' | 'trends';
+export type AnalyticsSubTab = "overview" | "categories" | "trends";
 
 interface AnalyticsScreenProps {
   totalBudget?: number;
@@ -35,7 +41,7 @@ export default function AnalyticsScreen({
   totalBudget = 0,
   totalSpent = 0,
   remainingAmount = 0,
-  currencyPrefix = '$',
+  currencyPrefix = "$",
   categoryDonutItems = [],
   categoryDetailItems = [],
   dailyAverage = 0,
@@ -43,41 +49,43 @@ export default function AnalyticsScreen({
   spendingTrend,
   spendingTrajectory,
   weeklySpending,
-  highestSpendingDay = 'None',
+  highestSpendingDay = "None",
   highestSpendingAmount = 0,
-  activeTab = 'analytics',
+  activeTab = "analytics",
   onTabPress = () => {},
   onPressInsight,
 }: AnalyticsScreenProps) {
   const insets = useSafeAreaInsets();
-  const [selectedSubTab, setSelectedSubTab] = useState<AnalyticsSubTab>('overview');
-  const [selectedPeriod, setSelectedPeriod] = useState<MonthPeriod>('this_month');
+  const [selectedSubTab, setSelectedSubTab] =
+    useState<AnalyticsSubTab>("overview");
+  const [selectedPeriod, setSelectedPeriod] =
+    useState<MonthPeriod>("this_month");
   const [isMonthModalVisible, setIsMonthModalVisible] = useState(false);
 
   // Dynamic calculations based on selected period
   const periodMultiplier =
-    selectedPeriod === 'last_month'
+    selectedPeriod === "last_month"
       ? 1.05
-      : selectedPeriod === 'last_3_months'
-      ? 3
-      : selectedPeriod === 'all_time'
-      ? 6
-      : 1;
+      : selectedPeriod === "last_3_months"
+        ? 3
+        : selectedPeriod === "all_time"
+          ? 6
+          : 1;
 
   const currentTotalBudget = Math.round(totalBudget * periodMultiplier);
   const currentTotalSpent = Math.round(totalSpent * periodMultiplier);
   const currentRemaining = Math.max(0, currentTotalBudget - currentTotalSpent);
 
   const subTabs: { id: AnalyticsSubTab; label: string }[] = [
-    { id: 'overview', label: 'Overview' },
-    { id: 'categories', label: 'Categories' },
-    { id: 'trends', label: 'Trends' },
+    { id: "overview", label: "Overview" },
+    { id: "categories", label: "Categories" },
+    { id: "trends", label: "Trends" },
   ];
 
   return (
     <SafeAreaView
       style={{ flex: 1, backgroundColor: colors.darkNavy }}
-      edges={['top']}
+      edges={["top"]}
     >
       {/* 1. Header Row: Title & Month Selector Pill */}
       <View className="px-5 pt-2 pb-3 flex-row items-center justify-between">
@@ -111,15 +119,15 @@ export default function AnalyticsScreen({
                 onPress={() => setSelectedSubTab(tab.id)}
                 className={`px-5 py-2 rounded-full mr-2 ${
                   isActive
-                    ? 'bg-[#087BFF]'
-                    : 'bg-transparent active:bg-[#111D35]/50'
+                    ? "bg-[#087BFF]"
+                    : "bg-transparent active:bg-[#111D35]/50"
                 }`}
               >
                 <Text
                   className={`text-sm ${
                     isActive
-                      ? 'text-white font-bold font-inter-bold'
-                      : 'text-text-secondary font-medium font-inter-medium'
+                      ? "text-white font-bold font-inter-bold"
+                      : "text-text-secondary font-medium font-inter-medium"
                   }`}
                 >
                   {tab.label}
@@ -140,7 +148,7 @@ export default function AnalyticsScreen({
         }}
         showsVerticalScrollIndicator={false}
       >
-        {selectedSubTab === 'overview' && (
+        {selectedSubTab === "overview" && (
           <OverviewTab
             totalBudget={currentTotalBudget}
             totalSpent={currentTotalSpent}
@@ -150,18 +158,18 @@ export default function AnalyticsScreen({
             budgetUtilizationPercent={budgetUtilizationPercent}
             spendingTrend={spendingTrend}
             onPressInsight={onPressInsight}
-            onPressCategoryCard={() => setSelectedSubTab('categories')}
+            onPressCategoryCard={() => setSelectedSubTab("categories")}
           />
         )}
 
-        {selectedSubTab === 'categories' && (
+        {selectedSubTab === "categories" && (
           <CategoriesTab
             categories={categoryDetailItems}
             currencyPrefix={currencyPrefix}
           />
         )}
 
-        {selectedSubTab === 'trends' && (
+        {selectedSubTab === "trends" && (
           <TrendsTab
             totalSpent={currentTotalSpent}
             dailyAverage={dailyAverage}
