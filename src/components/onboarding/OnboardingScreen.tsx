@@ -82,7 +82,7 @@ export default function OnboardingScreen({
               className="text-[30px] font-bold text-bright-blue text-center leading-[36px] tracking-tight"
               style={{ fontFamily: "Inter_700Bold" }}
             >
-              Budget Guardian 🔥🔥🔥🔥🚀🚀
+              Budget Guardian
             </Text>
             <Text
               className="text-text-secondary text-sm text-center mt-2"
