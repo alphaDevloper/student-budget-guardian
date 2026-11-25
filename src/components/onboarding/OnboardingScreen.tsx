@@ -1,14 +1,14 @@
-import React, { useState } from "react";
+import { ArrowRight } from "@/components/ui";
+import { useState } from "react";
 import {
-  View,
-  Text,
   Image,
   Pressable,
   ScrollView,
+  Text,
   useWindowDimensions,
+  View,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
-import { ArrowRight } from "@/components/ui";
 
 interface OnboardingScreenProps {
   onGetStarted?: () => void;
@@ -82,7 +82,7 @@ export default function OnboardingScreen({
               className="text-[30px] font-bold text-bright-blue text-center leading-[36px] tracking-tight"
               style={{ fontFamily: "Inter_700Bold" }}
             >
-              Budget Guardian
+              Budget Guardian 🔥🔥🔥🔥🚀🚀
             </Text>
             <Text
               className="text-text-secondary text-sm text-center mt-2"
