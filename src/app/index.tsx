@@ -1,25 +1,19 @@
-import React, { useState, useEffect } from 'react';
-import {
-  View,
-  Text,
-  Pressable,
-  ScrollView,
-  TextInput,
-  Alert,
-} from 'react-native';
-import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
-import OnboardingScreen from '@/components/onboarding/OnboardingScreen';
-import { HomeScreen, BottomTabBar } from '@/components/dashboard';
 import { AnalyticsScreen } from '@/components/analytics';
-import { AddExpenseScreen } from '@/components/expenses';
+import { HomeScreen } from '@/components/dashboard';
 import { TabKey } from '@/components/dashboard/BottomTabBar';
+import { AddExpenseScreen } from '@/components/expenses';
+import OnboardingScreen from '@/components/onboarding/OnboardingScreen';
+import { SettingsScreen } from '@/components/settings';
+import { CURRENT_USER } from '@/constants/user';
+import { getCategoryById } from '@/data/categories';
 import {
+  safeAsyncStorage,
   useBudgetStore,
   useExpenseStore,
+  useFinancialMetrics,
   useIncomeStore,
   useOnboardingStore,
-  useFinancialMetrics,
-  safeAsyncStorage,
+  useSettingsStore,
 } from '@/store';
 import { EXPENSE_CATEGORIES, getCategoryById } from '@/data/categories';
 import {
@@ -27,11 +21,13 @@ import {
   formatGreetingTitle,
 } from '@/constants/user';
 import { colors } from '@/theme/colors';
-import {
-  formatCurrency,
-  calculateBudgetUtilization,
-} from '@/utils';
 import { PaymentMethod, Transaction } from '@/types/budget';
+import { useEffect, useState } from 'react';
+import {
+  Alert
+} from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
+
 
 const PAYMENT_METHODS: PaymentMethod[] = [
   'Cash',
@@ -146,7 +142,8 @@ export default function Index() {
   } = useFinancialMetrics();
 
   // Currency prefix from user profile or budget ($ by default as in design)
-  const currencyPrefix = DEFAULT_CURRENCY_PREFIX;
+  const { profile } = useSettingsStore();
+const currencyPrefix = profile.currencyPrefix || CURRENT_USER.currencyPrefix;
 
   // Helper to get allocated budget for a category from real monthly budget
   const getCategoryAllocation = (catId: string) => {
@@ -441,68 +438,13 @@ export default function Index() {
 
   // 5. Settings Tab
   return (
-    <SafeAreaView className="flex-1 bg-dark-navy" edges={['top']}>
-      <View className="px-5 pt-3 pb-3 border-b border-border flex-row items-center justify-between">
-        <Text
-          className="text-white text-xl font-bold"
-          style={{ fontFamily: 'Inter_700Bold' }}
-        >
-          Settings
-        </Text>
-        <Pressable
-          onPress={() => setIsReplayingOnboarding(true)}
-          className="px-3 py-1 rounded-full bg-surface border border-border"
-        >
-          <Text className="text-bright-blue text-xs font-semibold">
-            ‹ Onboarding
-          </Text>
-        </Pressable>
-      </View>
-
-      <ScrollView
-        className="flex-1 px-5 pt-4"
-        contentContainerStyle={{ paddingBottom: 40 }}
-        showsVerticalScrollIndicator={false}
-      >
-        <View className="card-surface p-5 rounded-2xl mb-4">
-          <Text className="text-white font-bold text-base mb-2">
-            User Profile
-          </Text>
-          <Text className="text-text-secondary text-sm">
-            Name: {userName.trim() || 'Not set'}
-          </Text>
-          <Text className="text-text-secondary text-sm mt-1">
-            Currency: {currencyPrefix}
-          </Text>
-          <Text className="text-text-secondary text-sm mt-1">
-            Greeting: {formatGreetingTitle(userName)}
-          </Text>
-        </View>
-
-        <Pressable
-          onPress={handleClearAllData}
-          className="w-full py-3.5 rounded-full items-center justify-center mt-3 bg-danger/15 border border-danger/30 active:opacity-80"
-        >
-          <Text className="text-danger text-sm font-semibold">
-            Clear All Data & Reset to 0
-          </Text>
-        </Pressable>
-
-        <Pressable
-          onPress={() => setIsReplayingOnboarding(true)}
-          className="w-full btn-secondary py-3.5 rounded-full items-center justify-center mt-3"
-        >
-          <Text className="text-white text-sm font-semibold">
-            ← Replay Onboarding Screen
-          </Text>
-        </Pressable>
-      </ScrollView>
-
-      <BottomTabBar
-        activeTab={activeTab}
-        onTabPress={setActiveTab}
-        bottomInset={insets.bottom}
-      />
-    </SafeAreaView>
+    <SettingsScreen
+      activeTab={activeTab}
+      onTabPress={setActiveTab}
+      onLoggedOut={() => {
+        setIsReplayingOnboarding(false);
+        setActiveTab('home');
+      }}
+    />
   );
 }
