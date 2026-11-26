@@ -1,4 +1,9 @@
-import { CURRENT_USER } from "@/constants/user";
+import {
+  DEFAULT_GREETING_SUBTITLE,
+  formatGreetingTitle,
+} from "@/constants/user";
+import { IMAGES } from "@/constants/images";
+import { useOnboardingStore } from "@/store";
 import { colors } from "@/theme/colors";
 import { Transaction } from "@/types/budget";
 import { Bell, GraduationCap } from "lucide-react-native";
@@ -13,6 +18,7 @@ import CategoryBudgetGrid, { CategoryBudgetItem } from "./CategoryBudgetGrid";
 import RecentTransactionsList from "./RecentTransactionsList";
 
 interface HomeScreenProps {
+  userName?: string;
   totalBudget?: number;
   totalSpent?: number;
   remainingAmount?: number;
@@ -27,6 +33,7 @@ interface HomeScreenProps {
 }
 
 export default function HomeScreen({
+  userName,
   totalBudget = 0,
   totalSpent = 0,
   remainingAmount = 0,
@@ -40,6 +47,8 @@ export default function HomeScreen({
   onPressTransaction,
 }: HomeScreenProps) {
   const insets = useSafeAreaInsets();
+  const storedUserName = useOnboardingStore((state) => state.userName);
+  const resolvedName = userName ?? storedUserName;
 
   return (
     <SafeAreaView
@@ -62,7 +71,7 @@ export default function HomeScreen({
           {/* Brand Logo Shield Icon */}
           <View className="w-[42px] h-[42px] mr-3 items-center justify-center">
             <Image
-              source={require("@/assets/images/app_logo.png")}
+              source={IMAGES.appLogo}
               className="w-16"
               resizeMode="contain"
             />
@@ -150,10 +159,10 @@ export default function HomeScreen({
 
           <View className="pr-20">
             <Text className="text-white text-[22px] leading-7 font-inter-regular font-bold">
-              {CURRENT_USER.greetingTitle}
+              {formatGreetingTitle(resolvedName)}
             </Text>
             <Text className="text-text-secondary text-xs mt-1 font-inter-regular font-medium">
-              {CURRENT_USER.greetingSubtitle}
+              {DEFAULT_GREETING_SUBTITLE}
             </Text>
           </View>
         </View>

@@ -5,8 +5,10 @@ import { safeAsyncStorage } from './storage';
 export interface OnboardingState {
   isOnboardingCompleted: boolean;
   hasAddedFirstExpense: boolean;
+  userName: string;
 
   // Actions
+  setUserName: (name: string) => void;
   setOnboardingCompleted: (completed: boolean) => void;
   setHasAddedFirstExpense: (added: boolean) => void;
   completeFirstTimeFlow: () => void;
@@ -14,14 +16,18 @@ export interface OnboardingState {
 }
 
 /**
- * Zustand store with AsyncStorage persistence tracking onboarding completion
- * and first expense requirement.
+ * Zustand store with AsyncStorage persistence tracking onboarding completion,
+ * user's name, and first expense requirement.
  */
 export const useOnboardingStore = create<OnboardingState>()(
   persist(
     (set) => ({
       isOnboardingCompleted: false,
       hasAddedFirstExpense: false,
+      userName: '',
+
+      setUserName: (name) =>
+        set({ userName: name.trim() }),
 
       setOnboardingCompleted: (completed) =>
         set({ isOnboardingCompleted: completed }),
@@ -33,7 +39,11 @@ export const useOnboardingStore = create<OnboardingState>()(
         set({ isOnboardingCompleted: true, hasAddedFirstExpense: true }),
 
       resetOnboarding: () =>
-        set({ isOnboardingCompleted: false, hasAddedFirstExpense: false }),
+        set({
+          isOnboardingCompleted: false,
+          hasAddedFirstExpense: false,
+          userName: '',
+        }),
     }),
     {
       name: 'student-onboarding-v2',

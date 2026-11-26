@@ -2,6 +2,7 @@ export * from './budget-store';
 export * from './expense-store';
 export * from './income-store';
 export * from './onboarding-store';
+export * from './settings-store';
 export * from './storage';
 
 import { useBudgetStore } from './budget-store';

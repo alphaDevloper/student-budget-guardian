@@ -22,7 +22,10 @@ import {
   safeAsyncStorage,
 } from '@/store';
 import { EXPENSE_CATEGORIES, getCategoryById } from '@/data/categories';
-import { CURRENT_USER } from '@/constants/user';
+import {
+  DEFAULT_CURRENCY_PREFIX,
+  formatGreetingTitle,
+} from '@/constants/user';
 import { colors } from '@/theme/colors';
 import {
   formatCurrency,
@@ -43,6 +46,7 @@ export default function Index() {
   const {
     isOnboardingCompleted,
     hasAddedFirstExpense,
+    userName,
     setOnboardingCompleted,
     completeFirstTimeFlow,
     resetOnboarding,
@@ -142,7 +146,7 @@ export default function Index() {
   } = useFinancialMetrics();
 
   // Currency prefix from user profile or budget ($ by default as in design)
-  const currencyPrefix = CURRENT_USER.currencyPrefix || '$';
+  const currencyPrefix = DEFAULT_CURRENCY_PREFIX;
 
   // Helper to get allocated budget for a category from real monthly budget
   const getCategoryAllocation = (catId: string) => {
@@ -325,6 +329,7 @@ export default function Index() {
   if (activeTab === 'home') {
     return (
       <HomeScreen
+        userName={userName}
         totalBudget={totalMonthlyBudget}
         totalSpent={totalMonthlySpent}
         remainingAmount={totalRemainingBudget}
@@ -464,13 +469,13 @@ export default function Index() {
             User Profile
           </Text>
           <Text className="text-text-secondary text-sm">
-            Name: {CURRENT_USER.name}
+            Name: {userName.trim() || 'Not set'}
           </Text>
           <Text className="text-text-secondary text-sm mt-1">
             Currency: {currencyPrefix}
           </Text>
           <Text className="text-text-secondary text-sm mt-1">
-            Greeting: {CURRENT_USER.greetingTitle}
+            Greeting: {formatGreetingTitle(userName)}
           </Text>
         </View>
 

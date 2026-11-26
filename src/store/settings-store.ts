@@ -1,4 +1,4 @@
-import { CURRENT_USER } from '@/constants/user';
+import { DEFAULT_CURRENCY_PREFIX } from '@/constants/user';
 import { AppearanceMode, UserSettingsProfile } from '@/types/settings';
 import { create } from 'zustand';
 import { createJSONStorage, persist } from 'zustand/middleware';
@@ -18,9 +18,9 @@ export interface SettingsState {
 }
 
 const DEFAULT_PROFILE: UserSettingsProfile = {
-  name: CURRENT_USER.name,
+  name: '',
   role: 'Student',
-  currencyPrefix: CURRENT_USER.currencyPrefix,
+  currencyPrefix: DEFAULT_CURRENCY_PREFIX,
 };
 
 export const useSettingsStore = create<SettingsState>()(
