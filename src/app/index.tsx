@@ -4,8 +4,11 @@ import { TabKey } from '@/components/dashboard/BottomTabBar';
 import { AddExpenseScreen } from '@/components/expenses';
 import OnboardingScreen from '@/components/onboarding/OnboardingScreen';
 import { SettingsScreen } from '@/components/settings';
-import { CURRENT_USER } from '@/constants/user';
-import { getCategoryById } from '@/data/categories';
+import {
+  DEFAULT_CURRENCY_PREFIX,
+  formatGreetingTitle,
+} from '@/constants/user';
+import { EXPENSE_CATEGORIES, getCategoryById } from '@/data/categories';
 import {
   safeAsyncStorage,
   useBudgetStore,
@@ -15,11 +18,6 @@ import {
   useOnboardingStore,
   useSettingsStore,
 } from '@/store';
-import { EXPENSE_CATEGORIES, getCategoryById } from '@/data/categories';
-import {
-  DEFAULT_CURRENCY_PREFIX,
-  formatGreetingTitle,
-} from '@/constants/user';
 import { colors } from '@/theme/colors';
 import { PaymentMethod, Transaction } from '@/types/budget';
 import { useEffect, useState } from 'react';
@@ -42,7 +40,6 @@ export default function Index() {
   const {
     isOnboardingCompleted,
     hasAddedFirstExpense,
-    userName,
     setOnboardingCompleted,
     completeFirstTimeFlow,
     resetOnboarding,
@@ -104,6 +101,7 @@ export default function Index() {
             useExpenseStore.getState().resetExpensesToDefault();
             useIncomeStore.getState().resetIncomesToDefault();
             useBudgetStore.getState().resetBudgetToDefault();
+            useSettingsStore.getState().resetSettingsToDefault();
             resetOnboarding();
             setIsReplayingOnboarding(false);
             setActiveTab('home');
@@ -113,6 +111,7 @@ export default function Index() {
                 'student-budget-v2',
                 'student-income-v2',
                 'student-onboarding-v2',
+                'student-settings-v2',
                 'student-expense-storage',
                 'student-budget-storage',
                 'student-income-storage',
@@ -143,7 +142,7 @@ export default function Index() {
 
   // Currency prefix from user profile or budget ($ by default as in design)
   const { profile } = useSettingsStore();
-const currencyPrefix = profile.currencyPrefix || CURRENT_USER.currencyPrefix;
+  const currencyPrefix = profile.currencyPrefix || DEFAULT_CURRENCY_PREFIX;
 
   // Helper to get allocated budget for a category from real monthly budget
   const getCategoryAllocation = (catId: string) => {
@@ -326,7 +325,7 @@ const currencyPrefix = profile.currencyPrefix || CURRENT_USER.currencyPrefix;
   if (activeTab === 'home') {
     return (
       <HomeScreen
-        userName={userName}
+        userName={profile.name}
         totalBudget={totalMonthlyBudget}
         totalSpent={totalMonthlySpent}
         remainingAmount={totalRemainingBudget}

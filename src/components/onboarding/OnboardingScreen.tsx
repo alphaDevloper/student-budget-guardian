@@ -16,7 +16,7 @@ import { SafeAreaView } from "react-native-safe-area-context";
 import { ChevronLeft, User } from "lucide-react-native";
 import { ArrowRight } from "@/components/ui";
 import { IMAGES } from "@/constants/images";
-import { useOnboardingStore, useSettingsStore } from "@/store";
+import { useSettingsStore } from "@/store";
 import { colors } from "@/theme/colors";
 
 interface OnboardingScreenProps {
@@ -31,10 +31,10 @@ export default function OnboardingScreen({
   const { width, height } = useWindowDimensions();
   const isSmallScreen = height < 720;
 
-  const { userName, setUserName } = useOnboardingStore();
+  const { profile, updateProfile } = useSettingsStore();
 
   const [activeSlide, setActiveSlide] = useState(0);
-  const [nameInput, setNameInput] = useState(userName || "");
+  const [nameInput, setNameInput] = useState(profile.name || "");
   const [isInputFocused, setIsInputFocused] = useState(false);
   const [nameError, setNameError] = useState("");
 
@@ -72,8 +72,7 @@ export default function OnboardingScreen({
       return;
     }
 
-    setUserName(trimmedName);
-    useSettingsStore.getState().updateProfile({ name: trimmedName });
+    updateProfile({ name: trimmedName });
     onGetStarted?.();
   };
 
