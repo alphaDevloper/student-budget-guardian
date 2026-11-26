@@ -2,22 +2,23 @@ export * from './budget-store';
 export * from './expense-store';
 export * from './income-store';
 export * from './onboarding-store';
+export * from './settings-store';
 export * from './storage';
 
+import {
+  calculateBudgetUtilization,
+  calculateCategoryBreakdown,
+  calculateDailyAverage,
+  calculateRemainingBudget,
+  calculateSavingsRate,
+  calculateSpendingTrajectory,
+  calculateSpendingTrend,
+  calculateWeeklySpending,
+  getPeakSpendingDay,
+} from '@/utils/calculations';
 import { useBudgetStore } from './budget-store';
 import { useExpenseStore } from './expense-store';
 import { useIncomeStore } from './income-store';
-import {
-  calculateRemainingBudget,
-  calculateBudgetUtilization,
-  calculateSavingsRate,
-  calculateCategoryBreakdown,
-  calculateDailyAverage,
-  calculateWeeklySpending,
-  calculateSpendingTrajectory,
-  calculateSpendingTrend,
-  getPeakSpendingDay,
-} from '@/utils/calculations';
 
 /**
  * Custom hook to get real-time derived financial statistics
