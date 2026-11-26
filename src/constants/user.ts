@@ -1,19 +1,13 @@
 /**
- * Student Budget Guardian - User Profile Constant
+ * Student Budget Guardian - User & Greeting Defaults
+ * No hardcoded personal names or user IDs.
  */
 
-export interface UserProfile {
-  id: string;
-  name: string;
-  greetingTitle: string;
-  greetingSubtitle: string;
-  currencyPrefix: string;
-}
+export const DEFAULT_CURRENCY_PREFIX = '$';
+export const DEFAULT_GREETING_SUBTITLE =
+  "Keep going! You're managing your budget well.";
 
-export const CURRENT_USER: UserProfile = {
-  id: 'user-001',
-  name: 'Abdullah',
-  greetingTitle: 'Hello Abdullah 👋',
-  greetingSubtitle: "Keep going! You're managing your budget well.",
-  currencyPrefix: '$',
+export const formatGreetingTitle = (name?: string | null): string => {
+  const trimmed = name?.trim();
+  return trimmed ? `Hello ${trimmed} 👋` : 'Welcome 👋';
 };

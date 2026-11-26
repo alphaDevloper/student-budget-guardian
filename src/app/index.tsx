@@ -15,6 +15,11 @@ import {
   useOnboardingStore,
   useSettingsStore,
 } from '@/store';
+import { EXPENSE_CATEGORIES, getCategoryById } from '@/data/categories';
+import {
+  DEFAULT_CURRENCY_PREFIX,
+  formatGreetingTitle,
+} from '@/constants/user';
 import { colors } from '@/theme/colors';
 import { PaymentMethod, Transaction } from '@/types/budget';
 import { useEffect, useState } from 'react';
@@ -37,6 +42,7 @@ export default function Index() {
   const {
     isOnboardingCompleted,
     hasAddedFirstExpense,
+    userName,
     setOnboardingCompleted,
     completeFirstTimeFlow,
     resetOnboarding,
@@ -320,6 +326,7 @@ const currencyPrefix = profile.currencyPrefix || CURRENT_USER.currencyPrefix;
   if (activeTab === 'home') {
     return (
       <HomeScreen
+        userName={userName}
         totalBudget={totalMonthlyBudget}
         totalSpent={totalMonthlySpent}
         remainingAmount={totalRemainingBudget}
