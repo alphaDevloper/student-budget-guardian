@@ -21,24 +21,26 @@ import { colors } from "@/theme/colors";
 
 interface OnboardingScreenProps {
   onGetStarted?: () => void;
-  onSkip?: () => void;
+  initialSlide?: number;
 }
 
 export default function OnboardingScreen({
   onGetStarted,
-  onSkip,
+  initialSlide = 0,
 }: OnboardingScreenProps) {
   const { width, height } = useWindowDimensions();
   const isSmallScreen = height < 720;
 
   const { profile, updateProfile } = useSettingsStore();
 
-  const [activeSlide, setActiveSlide] = useState(0);
+  const [activeSlide, setActiveSlide] = useState(initialSlide);
   const [nameInput, setNameInput] = useState(profile.name || "");
   const [isInputFocused, setIsInputFocused] = useState(false);
   const [nameError, setNameError] = useState("");
 
-  const slideAnim = useRef(new Animated.Value(0)).current;
+  const isNameValid = nameInput.trim().length >= 2;
+
+  const slideAnim = useRef(new Animated.Value(-initialSlide * width)).current;
 
   useEffect(() => {
     Animated.timing(slideAnim, {
@@ -110,8 +112,8 @@ export default function OnboardingScreen({
       style={{ flex: 1, backgroundColor: colors.darkNavy }}
       edges={["top", "bottom"]}
     >
-      {/* Top Bar with Optional Back (Slide 2) & Skip */}
-      <View className="px-6 pt-2 pb-1 flex-row items-center justify-between z-10">
+      {/* Top Bar with Optional Back (Slide 2) */}
+      <View className="px-6 pt-2 pb-1 flex-row items-center justify-start z-10 min-h-[34px]">
         {activeSlide === 1 ? (
           <Pressable
             onPress={() => goToSlide(0)}
@@ -122,19 +124,7 @@ export default function OnboardingScreen({
           >
             <ChevronLeft size={22} color="#FFFFFF" />
           </Pressable>
-        ) : (
-          <View style={{ width: 24 }} />
-        )}
-
-        <Pressable
-          onPress={onSkip}
-          hitSlop={12}
-          className="py-1 px-2 rounded-md active:opacity-60"
-          accessibilityRole="button"
-          accessibilityLabel="Skip onboarding"
-        >
-          <Text className="text-white text-sm font-medium">Skip</Text>
-        </Pressable>
+        ) : null}
       </View>
 
       <KeyboardAvoidingView
@@ -453,9 +443,12 @@ export default function OnboardingScreen({
               <View className="px-6 mt-8">
                 <Pressable
                   onPress={handleContinue}
+                  disabled={!isNameValid}
+                  style={{ opacity: isNameValid ? 1 : 0.45 }}
                   className="w-full bg-bright-blue py-4 rounded-full items-center justify-center flex-row mb-5 active:opacity-90 shadow-lg shadow-bright-blue/30"
                   accessibilityRole="button"
                   accessibilityLabel="Continue to next step"
+                  accessibilityState={{ disabled: !isNameValid }}
                 >
                   <Text
                     className="text-white text-base font-semibold mr-2"

@@ -288,15 +288,18 @@ export default function Index() {
     (a, b) => new Date(b.date).getTime() - new Date(a.date).getTime()
   );
 
-  // 1. First-Time User Flow: Onboarding Screen
-  if (!isOnboardingCompleted || isReplayingOnboarding) {
+  const hasValidUserName = profile.name.trim().length >= 2;
+
+  // 1. First-Time User Flow: Onboarding Screen (requires valid user name)
+  if (!isOnboardingCompleted || isReplayingOnboarding || !hasValidUserName) {
     return (
       <OnboardingScreen
+        initialSlide={
+          isOnboardingCompleted && !hasValidUserName && !isReplayingOnboarding
+            ? 1
+            : 0
+        }
         onGetStarted={() => {
-          setIsReplayingOnboarding(false);
-          setOnboardingCompleted(true);
-        }}
-        onSkip={() => {
           setIsReplayingOnboarding(false);
           setOnboardingCompleted(true);
         }}
