@@ -40,7 +40,6 @@ export default function Index() {
   const {
     isOnboardingCompleted,
     hasAddedFirstExpense,
-    userName,
     setOnboardingCompleted,
     completeFirstTimeFlow,
     resetOnboarding,
@@ -102,6 +101,7 @@ export default function Index() {
             useExpenseStore.getState().resetExpensesToDefault();
             useIncomeStore.getState().resetIncomesToDefault();
             useBudgetStore.getState().resetBudgetToDefault();
+            useSettingsStore.getState().resetSettingsToDefault();
             resetOnboarding();
             setIsReplayingOnboarding(false);
             setActiveTab('home');
@@ -111,6 +111,7 @@ export default function Index() {
                 'student-budget-v2',
                 'student-income-v2',
                 'student-onboarding-v2',
+                'student-settings-v2',
                 'student-expense-storage',
                 'student-budget-storage',
                 'student-income-storage',
@@ -287,15 +288,18 @@ export default function Index() {
     (a, b) => new Date(b.date).getTime() - new Date(a.date).getTime()
   );
 
-  // 1. First-Time User Flow: Onboarding Screen
-  if (!isOnboardingCompleted || isReplayingOnboarding) {
+  const hasValidUserName = profile.name.trim().length >= 2;
+
+  // 1. First-Time User Flow: Onboarding Screen (requires valid user name)
+  if (!isOnboardingCompleted || isReplayingOnboarding || !hasValidUserName) {
     return (
       <OnboardingScreen
+        initialSlide={
+          isOnboardingCompleted && !hasValidUserName && !isReplayingOnboarding
+            ? 1
+            : 0
+        }
         onGetStarted={() => {
-          setIsReplayingOnboarding(false);
-          setOnboardingCompleted(true);
-        }}
-        onSkip={() => {
           setIsReplayingOnboarding(false);
           setOnboardingCompleted(true);
         }}
@@ -324,7 +328,7 @@ export default function Index() {
   if (activeTab === 'home') {
     return (
       <HomeScreen
-        userName={userName}
+        userName={profile.name}
         totalBudget={totalMonthlyBudget}
         totalSpent={totalMonthlySpent}
         remainingAmount={totalRemainingBudget}
