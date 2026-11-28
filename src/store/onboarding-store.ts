@@ -1,14 +1,14 @@
-import { create } from 'zustand';
-import { persist, createJSONStorage } from 'zustand/middleware';
-import { safeAsyncStorage } from './storage';
+import { create } from "zustand";
+import { createJSONStorage, persist } from "zustand/middleware";
+import { safeAsyncStorage } from "./storage";
 
 export interface OnboardingState {
   isOnboardingCompleted: boolean;
   hasAddedFirstExpense: boolean;
-  _hasHydrated: boolean;
+  userName: string;
 
   // Actions
-  setHasHydrated: (hydrated: boolean) => void;
+  setUserName: (name: string) => void;
   setOnboardingCompleted: (completed: boolean) => void;
   setHasAddedFirstExpense: (added: boolean) => void;
   completeFirstTimeFlow: () => void;
@@ -24,15 +24,14 @@ export const useOnboardingStore = create<OnboardingState>()(
     (set) => ({
       isOnboardingCompleted: false,
       hasAddedFirstExpense: false,
-      _hasHydrated: false,
+      userName: "",
 
-      setHasHydrated: (hydrated) => set({ _hasHydrated: hydrated }),
+      setUserName: (name) => set({ userName: name.trim() }),
 
       setOnboardingCompleted: (completed) =>
         set({ isOnboardingCompleted: completed }),
 
-      setHasAddedFirstExpense: (added) =>
-        set({ hasAddedFirstExpense: added }),
+      setHasAddedFirstExpense: (added) => set({ hasAddedFirstExpense: added }),
 
       completeFirstTimeFlow: () =>
         set({ isOnboardingCompleted: true, hasAddedFirstExpense: true }),
@@ -44,7 +43,7 @@ export const useOnboardingStore = create<OnboardingState>()(
         }),
     }),
     {
-      name: 'student-onboarding-v2',
+      name: "student-onboarding-v2",
       storage: createJSONStorage(() => safeAsyncStorage),
       partialize: (state) => ({
         isOnboardingCompleted: state.isOnboardingCompleted,
@@ -53,6 +52,6 @@ export const useOnboardingStore = create<OnboardingState>()(
       onRehydrateStorage: () => (state) => {
         state?.setHasHydrated(true);
       },
-    }
-  )
+    },
+  ),
 );

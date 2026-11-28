@@ -1,4 +1,9 @@
-import React, { useEffect, useRef, useState } from "react";
+import { ArrowRight } from "@/components/ui";
+import { IMAGES } from "@/constants/images";
+import { useSettingsStore } from "@/store";
+import { colors } from "@/theme/colors";
+import { ChevronLeft, User } from "lucide-react-native";
+import { useEffect, useRef, useState } from "react";
 import {
   Animated,
   Easing,
@@ -13,11 +18,6 @@ import {
   View,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
-import { ChevronLeft, User } from "lucide-react-native";
-import { ArrowRight } from "@/components/ui";
-import { IMAGES } from "@/constants/images";
-import { useSettingsStore } from "@/store";
-import { colors } from "@/theme/colors";
 
 interface OnboardingScreenProps {
   onGetStarted?: () => void;
@@ -382,8 +382,7 @@ export default function OnboardingScreen({
                     className="text-[28px] font-bold text-white text-center leading-[34px] tracking-tight"
                     style={{ fontFamily: "Inter_700Bold" }}
                   >
-                    What’s Your{" "}
-                    <Text className="text-bright-blue">Name?</Text>
+                    What’s Your <Text className="text-bright-blue">Name?</Text>
                   </Text>
                   <Text
                     className="text-text-secondary text-sm text-center mt-2.5 leading-5 px-4"
@@ -403,8 +402,8 @@ export default function OnboardingScreen({
                       borderColor: nameError
                         ? colors.danger
                         : isInputFocused
-                        ? colors.brightBlue
-                        : "#1E3A6E",
+                          ? colors.brightBlue
+                          : "#1E3A6E",
                       shadowColor: isInputFocused ? colors.brightBlue : "#000",
                       shadowOffset: { width: 0, height: 0 },
                       shadowOpacity: isInputFocused ? 0.35 : 0,

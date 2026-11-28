@@ -1,14 +1,11 @@
-import { AnalyticsScreen } from '@/components/analytics';
-import { HomeScreen } from '@/components/dashboard';
-import { TabKey } from '@/components/dashboard/BottomTabBar';
-import { AddExpenseScreen } from '@/components/expenses';
-import OnboardingScreen from '@/components/onboarding/OnboardingScreen';
-import { SettingsScreen } from '@/components/settings';
-import {
-  DEFAULT_CURRENCY_PREFIX,
-  formatGreetingTitle,
-} from '@/constants/user';
-import { EXPENSE_CATEGORIES, getCategoryById } from '@/data/categories';
+import { AnalyticsScreen } from "@/components/analytics";
+import { HomeScreen } from "@/components/dashboard";
+import { TabKey } from "@/components/dashboard/BottomTabBar";
+import { AddExpenseScreen } from "@/components/expenses";
+import OnboardingScreen from "@/components/onboarding/OnboardingScreen";
+import { SettingsScreen } from "@/components/settings";
+import { DEFAULT_CURRENCY_PREFIX } from "@/constants/user";
+import { getCategoryById } from "@/data/categories";
 import {
   safeAsyncStorage,
   useBudgetStore,
@@ -17,32 +14,27 @@ import {
   useIncomeStore,
   useOnboardingStore,
   useSettingsStore,
-} from '@/store';
-import { colors } from '@/theme/colors';
-import { PaymentMethod, Transaction } from '@/types/budget';
-import { useEffect, useState } from 'react';
-import {
-  ActivityIndicator,
-  Alert,
-  View,
-} from 'react-native';
-import { useSafeAreaInsets } from 'react-native-safe-area-context';
-
+} from "@/store";
+import { colors } from "@/theme/colors";
+import { PaymentMethod, Transaction } from "@/types/budget";
+import { useEffect, useState } from "react";
+import { Alert } from "react-native";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 const PAYMENT_METHODS: PaymentMethod[] = [
-  'Cash',
-  'Easypaisa',
-  'Nayapay',
-  'Sadapay',
-  'JazzCash',
-  'Bank Transfer',
+  "Cash",
+  "Easypaisa",
+  "Nayapay",
+  "Sadapay",
+  "JazzCash",
+  "Bank Transfer",
 ];
 
 export default function Index() {
   const {
     isOnboardingCompleted,
     hasAddedFirstExpense,
-    _hasHydrated: isOnboardingHydrated,
+    userName,
     setOnboardingCompleted,
     completeFirstTimeFlow,
     resetOnboarding,
@@ -56,12 +48,12 @@ export default function Index() {
 
   const [isPurgeChecked, setIsPurgeChecked] = useState(false);
   const [isReplayingOnboarding, setIsReplayingOnboarding] = useState(false);
-  const [activeTab, setActiveTab] = useState<TabKey>('home');
+  const [activeTab, setActiveTab] = useState<TabKey>("home");
   const insets = useSafeAreaInsets();
 
   useEffect(() => {
     // One-time purge of legacy sample transactions stored in AsyncStorage
-    Promise.resolve(safeAsyncStorage.getItem('@student_guardian_v2_purged'))
+    Promise.resolve(safeAsyncStorage.getItem("@student_guardian_v2_purged"))
       .then((purged) => {
         if (!purged) {
           useExpenseStore.getState().resetExpensesToDefault();
@@ -70,17 +62,20 @@ export default function Index() {
           resetOnboarding();
           resetSettingsToDefault();
           Promise.all([
-            safeAsyncStorage.removeItem('student-expense-storage'),
-            safeAsyncStorage.removeItem('student-budget-storage'),
-            safeAsyncStorage.removeItem('student-income-storage'),
-            safeAsyncStorage.removeItem('student-expense-v2'),
-            safeAsyncStorage.removeItem('student-budget-v2'),
-            safeAsyncStorage.removeItem('student-income-v2'),
-            safeAsyncStorage.removeItem('student-onboarding-v2'),
-            safeAsyncStorage.removeItem('student-settings-v2'),
+            safeAsyncStorage.removeItem("student-expense-storage"),
+            safeAsyncStorage.removeItem("student-budget-storage"),
+            safeAsyncStorage.removeItem("student-income-storage"),
+            safeAsyncStorage.removeItem("student-expense-v2"),
+            safeAsyncStorage.removeItem("student-budget-v2"),
+            safeAsyncStorage.removeItem("student-income-v2"),
+            safeAsyncStorage.removeItem("student-onboarding-v2"),
+            safeAsyncStorage.removeItem("student-settings-v2"),
           ])
             .then(() => {
-              return safeAsyncStorage.setItem('@student_guardian_v2_purged', 'true');
+              return safeAsyncStorage.setItem(
+                "@student_guardian_v2_purged",
+                "true",
+              );
             })
             .catch(() => {})
             .finally(() => setIsPurgeChecked(true));
@@ -107,38 +102,42 @@ export default function Index() {
 
   const handleClearAllData = () => {
     Alert.alert(
-      'Clear All Data',
-      'Are you sure you want to delete all expenses, income records, and budget allocations? This will also reset the onboarding flow.',
+      "Clear All Data",
+      "Are you sure you want to delete all expenses, income records, and budget allocations? This will also reset the onboarding flow.",
       [
-        { text: 'Cancel', style: 'cancel' },
+        { text: "Cancel", style: "cancel" },
         {
-          text: 'Clear Everything',
-          style: 'destructive',
+          text: "Clear Everything",
+          style: "destructive",
           onPress: async () => {
             useExpenseStore.getState().resetExpensesToDefault();
             useIncomeStore.getState().resetIncomesToDefault();
             useBudgetStore.getState().resetBudgetToDefault();
-            resetSettingsToDefault();
             resetOnboarding();
             setIsReplayingOnboarding(false);
-            setActiveTab('home');
+            setActiveTab("home");
             try {
               const keys = [
-                'student-expense-v2',
-                'student-budget-v2',
-                'student-income-v2',
-                'student-onboarding-v2',
-                'student-settings-v2',
-                'student-expense-storage',
-                'student-budget-storage',
-                'student-income-storage',
+                "student-expense-v2",
+                "student-budget-v2",
+                "student-income-v2",
+                "student-onboarding-v2",
+                "student-settings-v2",
+                "student-expense-storage",
+                "student-budget-storage",
+                "student-income-storage",
               ];
-              await Promise.all(keys.map((k) => safeAsyncStorage.removeItem(k)));
+              await Promise.all(
+                keys.map((k) => safeAsyncStorage.removeItem(k)),
+              );
             } catch {}
-            Alert.alert('Cleared', 'All stored data and onboarding progress have been reset.');
+            Alert.alert(
+              "Cleared",
+              "All stored data and onboarding progress have been reset.",
+            );
           },
         },
-      ]
+      ],
     );
   };
   const {
@@ -163,48 +162,49 @@ export default function Index() {
   // Helper to get allocated budget for a category from real monthly budget
   const getCategoryAllocation = (catId: string) => {
     return (
-      monthlyBudget?.categoryBudgets?.find((cb) => cb.categoryId === catId)?.allocatedAmount || 0
+      monthlyBudget?.categoryBudgets?.find((cb) => cb.categoryId === catId)
+        ?.allocatedAmount || 0
     );
   };
 
   // Format category budget items for CategoryBudgetGrid (purely real data from store)
   const categoryGridItems = [
     {
-      id: 'food',
-      name: 'Food & Dining',
-      spent: categorySpending['food'] || 0,
-      allocated: getCategoryAllocation('food'),
+      id: "food",
+      name: "Food & Dining",
+      spent: categorySpending["food"] || 0,
+      allocated: getCategoryAllocation("food"),
       color: colors.warning,
     },
     {
-      id: 'study',
-      name: 'Books & Study',
-      spent: categorySpending['study'] || 0,
-      allocated: getCategoryAllocation('study'),
+      id: "study",
+      name: "Books & Study",
+      spent: categorySpending["study"] || 0,
+      allocated: getCategoryAllocation("study"),
       color: colors.brightBlue,
     },
     {
-      id: 'transport',
-      name: 'Transport',
-      spent: categorySpending['transport'] || 0,
-      allocated: getCategoryAllocation('transport'),
+      id: "transport",
+      name: "Transport",
+      spent: categorySpending["transport"] || 0,
+      allocated: getCategoryAllocation("transport"),
       color: colors.success,
     },
     {
-      id: 'other',
-      name: 'Others',
+      id: "other",
+      name: "Others",
       spent:
-        (categorySpending['other'] || 0) +
-        (categorySpending['bills'] || 0) +
-        (categorySpending['entertainment'] || 0) +
-        (categorySpending['health'] || 0) +
-        (categorySpending['shopping'] || 0),
+        (categorySpending["other"] || 0) +
+        (categorySpending["bills"] || 0) +
+        (categorySpending["entertainment"] || 0) +
+        (categorySpending["health"] || 0) +
+        (categorySpending["shopping"] || 0),
       allocated:
-        getCategoryAllocation('other') +
-        getCategoryAllocation('bills') +
-        getCategoryAllocation('entertainment') +
-        getCategoryAllocation('health') +
-        getCategoryAllocation('shopping'),
+        getCategoryAllocation("other") +
+        getCategoryAllocation("bills") +
+        getCategoryAllocation("entertainment") +
+        getCategoryAllocation("health") +
+        getCategoryAllocation("shopping"),
       color: colors.purple,
     },
   ];
@@ -212,118 +212,103 @@ export default function Index() {
   // Real-time financial calculations connected exclusively to Zustand stores & AsyncStorage
   const totalMonthlyBudget = monthlyBudget?.totalBudget || 0;
   const totalMonthlySpent = totalExpenses;
-  const totalRemainingBudget = Math.max(0, totalMonthlyBudget - totalMonthlySpent);
+  const totalRemainingBudget = Math.max(
+    0,
+    totalMonthlyBudget - totalMonthlySpent,
+  );
 
-  const foodSpent = categorySpending['food'] || 0;
-  const studySpent = categorySpending['study'] || 0;
-  const transportSpent = categorySpending['transport'] || 0;
+  const foodSpent = categorySpending["food"] || 0;
+  const studySpent = categorySpending["study"] || 0;
+  const transportSpent = categorySpending["transport"] || 0;
   const otherSpent =
-    (categorySpending['other'] || 0) +
-    (categorySpending['bills'] || 0) +
-    (categorySpending['entertainment'] || 0) +
-    (categorySpending['health'] || 0) +
-    (categorySpending['shopping'] || 0);
+    (categorySpending["other"] || 0) +
+    (categorySpending["bills"] || 0) +
+    (categorySpending["entertainment"] || 0) +
+    (categorySpending["health"] || 0) +
+    (categorySpending["shopping"] || 0);
 
   const analyticsDonutItems = [
     {
-      id: 'food',
-      name: 'Food & Dining',
+      id: "food",
+      name: "Food & Dining",
       percentage:
         totalMonthlySpent > 0
           ? Math.round((foodSpent / totalMonthlySpent) * 100)
           : 0,
-      color: '#FF9F43',
+      color: "#FF9F43",
     },
     {
-      id: 'study',
-      name: 'Books & Study',
+      id: "study",
+      name: "Books & Study",
       percentage:
         totalMonthlySpent > 0
           ? Math.round((studySpent / totalMonthlySpent) * 100)
           : 0,
-      color: '#FFB938',
+      color: "#FFB938",
     },
     {
-      id: 'transport',
-      name: 'Transport',
+      id: "transport",
+      name: "Transport",
       percentage:
         totalMonthlySpent > 0
           ? Math.round((transportSpent / totalMonthlySpent) * 100)
           : 0,
-      color: '#20D997',
+      color: "#20D997",
     },
     {
-      id: 'others',
-      name: 'Others',
+      id: "others",
+      name: "Others",
       percentage:
         totalMonthlySpent > 0
           ? Math.round((otherSpent / totalMonthlySpent) * 100)
           : 0,
-      color: '#965BFF',
+      color: "#965BFF",
     },
   ];
 
   const analyticsCategoryDetails = [
     {
-      id: 'food',
-      name: 'Food & Dining',
+      id: "food",
+      name: "Food & Dining",
       spent: foodSpent,
-      allocated: getCategoryAllocation('food'),
-      color: '#FF9F43',
+      allocated: getCategoryAllocation("food"),
+      color: "#FF9F43",
     },
     {
-      id: 'study',
-      name: 'Books & Study',
+      id: "study",
+      name: "Books & Study",
       spent: studySpent,
-      allocated: getCategoryAllocation('study'),
-      color: '#FFB938',
+      allocated: getCategoryAllocation("study"),
+      color: "#FFB938",
     },
     {
-      id: 'transport',
-      name: 'Transport',
+      id: "transport",
+      name: "Transport",
       spent: transportSpent,
-      allocated: getCategoryAllocation('transport'),
-      color: '#20D997',
+      allocated: getCategoryAllocation("transport"),
+      color: "#20D997",
     },
     {
-      id: 'others',
-      name: 'Others',
+      id: "others",
+      name: "Others",
       spent: otherSpent,
       allocated:
-        getCategoryAllocation('other') +
-        getCategoryAllocation('bills') +
-        getCategoryAllocation('entertainment') +
-        getCategoryAllocation('health') +
-        getCategoryAllocation('shopping'),
-      color: '#965BFF',
+        getCategoryAllocation("other") +
+        getCategoryAllocation("bills") +
+        getCategoryAllocation("entertainment") +
+        getCategoryAllocation("health") +
+        getCategoryAllocation("shopping"),
+      color: "#965BFF",
     },
   ];
 
   // All transactions combined and sorted by date
   const allTransactions: Transaction[] = [...expenses, ...incomes].sort(
-    (a, b) => new Date(b.date).getTime() - new Date(a.date).getTime()
+    (a, b) => new Date(b.date).getTime() - new Date(a.date).getTime(),
   );
 
-  // Wait for AsyncStorage hydration before evaluating onboarding/navigation guards
-  if (!isOnboardingHydrated || !isSettingsHydrated || !isPurgeChecked) {
-    return (
-      <View
-        style={{
-          flex: 1,
-          backgroundColor: colors.darkNavy,
-          alignItems: 'center',
-          justifyContent: 'center',
-        }}
-      >
-        <ActivityIndicator size="large" color={colors.primary} />
-      </View>
-    );
-  }
-
-  const hasValidUserName = profile.name.trim().length >= 2;
-
-  // 1. First-Time User Flow: Onboarding Screen (requires valid user name)
-  if (!isOnboardingCompleted || isReplayingOnboarding || !hasValidUserName) {
+  // 1. First-Time User Flow: Onboarding Screen
+  if (!isOnboardingCompleted || isReplayingOnboarding) {
     return (
       <OnboardingScreen
         initialSlide={
@@ -350,14 +335,14 @@ export default function Index() {
         }}
         onSuccess={() => {
           completeFirstTimeFlow();
-          setActiveTab('home');
+          setActiveTab("home");
         }}
       />
     );
   }
 
   // 2. Home Tab (Pixel-Perfect Home Screen from Design)
-  if (activeTab === 'home') {
+  if (activeTab === "home") {
     return (
       <HomeScreen
         userName={profile.name}
@@ -372,27 +357,33 @@ export default function Index() {
         onNotificationPress={() => {
           if (totalMonthlySpent === 0) {
             Alert.alert(
-              'Notifications',
-              'No new alerts. Your budget is in great shape!'
+              "Notifications",
+              "No new alerts. Your budget is in great shape!",
             );
-          } else if (totalMonthlyBudget > 0 && totalMonthlySpent > totalMonthlyBudget) {
+          } else if (
+            totalMonthlyBudget > 0 &&
+            totalMonthlySpent > totalMonthlyBudget
+          ) {
             Alert.alert(
-              'Budget Alert',
-              `You have exceeded your total monthly budget of ${currencyPrefix}${totalMonthlyBudget}!`
+              "Budget Alert",
+              `You have exceeded your total monthly budget of ${currencyPrefix}${totalMonthlyBudget}!`,
             );
-          } else if (totalMonthlyBudget > 0 && totalMonthlySpent >= totalMonthlyBudget * 0.8) {
+          } else if (
+            totalMonthlyBudget > 0 &&
+            totalMonthlySpent >= totalMonthlyBudget * 0.8
+          ) {
             Alert.alert(
-              'Budget Warning',
-              `You have used ${Math.round((totalMonthlySpent / totalMonthlyBudget) * 100)}% of your monthly budget.`
+              "Budget Warning",
+              `You have used ${Math.round((totalMonthlySpent / totalMonthlyBudget) * 100)}% of your monthly budget.`,
             );
           } else {
             Alert.alert(
-              'Notifications',
-              "Keep it up! You're managing your budget well."
+              "Notifications",
+              "Keep it up! You're managing your budget well.",
             );
           }
         }}
-        onSeeAllTransactions={() => setActiveTab('analytics')}
+        onSeeAllTransactions={() => setActiveTab("analytics")}
         onPressTransaction={(tx) => {
           Alert.alert(
             tx.title,
@@ -400,13 +391,13 @@ export default function Index() {
               getCategoryById(tx.categoryId).name
             }\nDate: ${new Date(tx.date).toLocaleDateString()}`,
             [
-              { text: 'Close', style: 'cancel' },
+              { text: "Close", style: "cancel" },
               {
-                text: 'Delete',
-                style: 'destructive',
+                text: "Delete",
+                style: "destructive",
                 onPress: () => deleteExpense(tx.id),
               },
-            ]
+            ],
           );
         }}
       />
@@ -414,18 +405,18 @@ export default function Index() {
   }
 
   // 3. Add Expense Tab (Pixel-Perfect Matching Reference Design)
-  if (activeTab === 'add') {
+  if (activeTab === "add") {
     return (
       <AddExpenseScreen
-        onBack={() => setActiveTab('home')}
-        onSuccess={() => setActiveTab('home')}
+        onBack={() => setActiveTab("home")}
+        onSuccess={() => setActiveTab("home")}
         currencyPrefix={currencyPrefix}
       />
     );
   }
 
   // 4. Analytics Tab (Pixel-Perfect Matching Reference Design)
-  if (activeTab === 'analytics') {
+  if (activeTab === "analytics") {
     return (
       <AnalyticsScreen
         totalBudget={totalMonthlyBudget}
@@ -450,19 +441,25 @@ export default function Index() {
         onPressInsight={() => {
           if (totalMonthlySpent === 0) {
             Alert.alert(
-              'Budget Status',
-              'You have no expenses recorded yet. Tap + to add an expense.'
+              "Budget Status",
+              "You have no expenses recorded yet. Tap + to add an expense.",
             );
           } else if (totalMonthlyBudget === 0) {
             Alert.alert(
-              'Budget Status',
-              `You have spent ${currencyPrefix}${totalMonthlySpent}. Set a monthly budget to track your target limit.`
+              "Budget Status",
+              `You have spent ${currencyPrefix}${totalMonthlySpent}. Set a monthly budget to track your target limit.`,
             );
           } else {
-            const pct = Math.round((totalMonthlySpent / totalMonthlyBudget) * 100);
+            const pct = Math.round(
+              (totalMonthlySpent / totalMonthlyBudget) * 100,
+            );
             Alert.alert(
-              pct > 100 ? 'Over Budget' : pct > 80 ? 'Budget Warning' : "You're on track!",
-              `You have spent ${currencyPrefix}${totalMonthlySpent} of your ${currencyPrefix}${totalMonthlyBudget} budget (${pct}% used), leaving ${currencyPrefix}${totalRemainingBudget} remaining.`
+              pct > 100
+                ? "Over Budget"
+                : pct > 80
+                  ? "Budget Warning"
+                  : "You're on track!",
+              `You have spent ${currencyPrefix}${totalMonthlySpent} of your ${currencyPrefix}${totalMonthlyBudget} budget (${pct}% used), leaving ${currencyPrefix}${totalRemainingBudget} remaining.`,
             );
           }
         }}
@@ -477,7 +474,7 @@ export default function Index() {
       onTabPress={setActiveTab}
       onLoggedOut={() => {
         setIsReplayingOnboarding(false);
-        setActiveTab('home');
+        setActiveTab("home");
       }}
     />
   );
