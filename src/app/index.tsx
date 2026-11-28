@@ -22,7 +22,9 @@ import { colors } from '@/theme/colors';
 import { PaymentMethod, Transaction } from '@/types/budget';
 import { useEffect, useState } from 'react';
 import {
-  Alert
+  ActivityIndicator,
+  Alert,
+  View,
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
@@ -40,12 +42,19 @@ export default function Index() {
   const {
     isOnboardingCompleted,
     hasAddedFirstExpense,
-    userName,
+    _hasHydrated: isOnboardingHydrated,
     setOnboardingCompleted,
     completeFirstTimeFlow,
     resetOnboarding,
   } = useOnboardingStore();
 
+  const {
+    profile,
+    _hasHydrated: isSettingsHydrated,
+    resetSettingsToDefault,
+  } = useSettingsStore();
+
+  const [isPurgeChecked, setIsPurgeChecked] = useState(false);
   const [isReplayingOnboarding, setIsReplayingOnboarding] = useState(false);
   const [activeTab, setActiveTab] = useState<TabKey>('home');
   const insets = useSafeAreaInsets();
@@ -59,6 +68,7 @@ export default function Index() {
           useIncomeStore.getState().resetIncomesToDefault();
           useBudgetStore.getState().resetBudgetToDefault();
           resetOnboarding();
+          resetSettingsToDefault();
           Promise.all([
             safeAsyncStorage.removeItem('student-expense-storage'),
             safeAsyncStorage.removeItem('student-budget-storage'),
@@ -67,14 +77,20 @@ export default function Index() {
             safeAsyncStorage.removeItem('student-budget-v2'),
             safeAsyncStorage.removeItem('student-income-v2'),
             safeAsyncStorage.removeItem('student-onboarding-v2'),
+            safeAsyncStorage.removeItem('student-settings-v2'),
           ])
             .then(() => {
-              safeAsyncStorage.setItem('@student_guardian_v2_purged', 'true');
+              return safeAsyncStorage.setItem('@student_guardian_v2_purged', 'true');
             })
-            .catch(() => {});
+            .catch(() => {})
+            .finally(() => setIsPurgeChecked(true));
+        } else {
+          setIsPurgeChecked(true);
         }
       })
-      .catch(() => {});
+      .catch(() => {
+        setIsPurgeChecked(true);
+      });
   }, []);
 
   // Zustand Stores
@@ -102,6 +118,7 @@ export default function Index() {
             useExpenseStore.getState().resetExpensesToDefault();
             useIncomeStore.getState().resetIncomesToDefault();
             useBudgetStore.getState().resetBudgetToDefault();
+            resetSettingsToDefault();
             resetOnboarding();
             setIsReplayingOnboarding(false);
             setActiveTab('home');
@@ -111,6 +128,7 @@ export default function Index() {
                 'student-budget-v2',
                 'student-income-v2',
                 'student-onboarding-v2',
+                'student-settings-v2',
                 'student-expense-storage',
                 'student-budget-storage',
                 'student-income-storage',
@@ -140,7 +158,6 @@ export default function Index() {
   } = useFinancialMetrics();
 
   // Currency prefix from user profile or budget ($ by default as in design)
-  const { profile } = useSettingsStore();
   const currencyPrefix = profile.currencyPrefix || DEFAULT_CURRENCY_PREFIX;
 
   // Helper to get allocated budget for a category from real monthly budget
@@ -287,15 +304,34 @@ export default function Index() {
     (a, b) => new Date(b.date).getTime() - new Date(a.date).getTime()
   );
 
-  // 1. First-Time User Flow: Onboarding Screen
-  if (!isOnboardingCompleted || isReplayingOnboarding) {
+  // Wait for AsyncStorage hydration before evaluating onboarding/navigation guards
+  if (!isOnboardingHydrated || !isSettingsHydrated || !isPurgeChecked) {
+    return (
+      <View
+        style={{
+          flex: 1,
+          backgroundColor: colors.darkNavy,
+          alignItems: 'center',
+          justifyContent: 'center',
+        }}
+      >
+        <ActivityIndicator size="large" color={colors.primary} />
+      </View>
+    );
+  }
+
+  const hasValidUserName = profile.name.trim().length >= 2;
+
+  // 1. First-Time User Flow: Onboarding Screen (requires valid user name)
+  if (!isOnboardingCompleted || isReplayingOnboarding || !hasValidUserName) {
     return (
       <OnboardingScreen
+        initialSlide={
+          isOnboardingCompleted && !hasValidUserName && !isReplayingOnboarding
+            ? 1
+            : 0
+        }
         onGetStarted={() => {
-          setIsReplayingOnboarding(false);
-          setOnboardingCompleted(true);
-        }}
-        onSkip={() => {
           setIsReplayingOnboarding(false);
           setOnboardingCompleted(true);
         }}
@@ -324,7 +360,7 @@ export default function Index() {
   if (activeTab === 'home') {
     return (
       <HomeScreen
-        userName={userName}
+        userName={profile.name}
         totalBudget={totalMonthlyBudget}
         totalSpent={totalMonthlySpent}
         remainingAmount={totalRemainingBudget}

@@ -5,10 +5,10 @@ import { safeAsyncStorage } from './storage';
 export interface OnboardingState {
   isOnboardingCompleted: boolean;
   hasAddedFirstExpense: boolean;
-  userName: string;
+  _hasHydrated: boolean;
 
   // Actions
-  setUserName: (name: string) => void;
+  setHasHydrated: (hydrated: boolean) => void;
   setOnboardingCompleted: (completed: boolean) => void;
   setHasAddedFirstExpense: (added: boolean) => void;
   completeFirstTimeFlow: () => void;
@@ -16,18 +16,17 @@ export interface OnboardingState {
 }
 
 /**
- * Zustand store with AsyncStorage persistence tracking onboarding completion,
- * user's name, and first expense requirement.
+ * Zustand store with AsyncStorage persistence tracking onboarding completion
+ * and first expense requirement.
  */
 export const useOnboardingStore = create<OnboardingState>()(
   persist(
     (set) => ({
       isOnboardingCompleted: false,
       hasAddedFirstExpense: false,
-      userName: '',
+      _hasHydrated: false,
 
-      setUserName: (name) =>
-        set({ userName: name.trim() }),
+      setHasHydrated: (hydrated) => set({ _hasHydrated: hydrated }),
 
       setOnboardingCompleted: (completed) =>
         set({ isOnboardingCompleted: completed }),
@@ -42,12 +41,18 @@ export const useOnboardingStore = create<OnboardingState>()(
         set({
           isOnboardingCompleted: false,
           hasAddedFirstExpense: false,
-          userName: '',
         }),
     }),
     {
       name: 'student-onboarding-v2',
       storage: createJSONStorage(() => safeAsyncStorage),
+      partialize: (state) => ({
+        isOnboardingCompleted: state.isOnboardingCompleted,
+        hasAddedFirstExpense: state.hasAddedFirstExpense,
+      }),
+      onRehydrateStorage: () => (state) => {
+        state?.setHasHydrated(true);
+      },
     }
   )
 );

@@ -3,7 +3,7 @@ import {
   formatGreetingTitle,
 } from "@/constants/user";
 import { IMAGES } from "@/constants/images";
-import { useOnboardingStore } from "@/store";
+import { useSettingsStore } from "@/store";
 import { colors } from "@/theme/colors";
 import { Transaction } from "@/types/budget";
 import { Bell, GraduationCap } from "lucide-react-native";
@@ -47,7 +47,7 @@ export default function HomeScreen({
   onPressTransaction,
 }: HomeScreenProps) {
   const insets = useSafeAreaInsets();
-  const storedUserName = useOnboardingStore((state) => state.userName);
+  const storedUserName = useSettingsStore((state) => state.profile.name);
   const resolvedName = userName ?? storedUserName;
 
   return (

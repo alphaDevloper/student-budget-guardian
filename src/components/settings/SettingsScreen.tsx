@@ -160,7 +160,7 @@ export default function SettingsScreen({
       >
         {/* 1. Profile Card */}
         <ProfileCard
-          name={profile.name}
+          name={profile.name.trim() || 'Student'}
           role={profile.role}
           onPress={() => setIsProfileEditVisible(true)}
         />
