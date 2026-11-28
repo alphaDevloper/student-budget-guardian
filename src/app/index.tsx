@@ -18,7 +18,7 @@ import {
 import { colors } from "@/theme/colors";
 import { PaymentMethod, Transaction } from "@/types/budget";
 import { useEffect, useState } from "react";
-import { Alert } from "react-native";
+import { ActivityIndicator, Alert, View } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 const PAYMENT_METHODS: PaymentMethod[] = [
@@ -34,7 +34,7 @@ export default function Index() {
   const {
     isOnboardingCompleted,
     hasAddedFirstExpense,
-    userName,
+    _hasHydrated: isOnboardingHydrated,
     setOnboardingCompleted,
     completeFirstTimeFlow,
     resetOnboarding,
@@ -307,8 +307,26 @@ export default function Index() {
     (a, b) => new Date(b.date).getTime() - new Date(a.date).getTime(),
   );
 
-  // 1. First-Time User Flow: Onboarding Screen
-  if (!isOnboardingCompleted || isReplayingOnboarding) {
+  // Wait for AsyncStorage hydration before evaluating onboarding/navigation guards
+  if (!isOnboardingHydrated || !isSettingsHydrated || !isPurgeChecked) {
+    return (
+      <View
+        style={{
+          flex: 1,
+          backgroundColor: colors.darkNavy,
+          alignItems: "center",
+          justifyContent: "center",
+        }}
+      >
+        <ActivityIndicator size="large" color={colors.primary} />
+      </View>
+    );
+  }
+
+  const hasValidUserName = profile.name.trim().length >= 2;
+
+  // 1. First-Time User Flow: Onboarding Screen (requires valid user name)
+  if (!isOnboardingCompleted || isReplayingOnboarding || !hasValidUserName) {
     return (
       <OnboardingScreen
         initialSlide={
